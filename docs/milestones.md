@@ -1,6 +1,6 @@
 # Proposed milestones and acceptance stops
 
-Scope revision: **R3 consolidated documentation**, preserving the established M01-M04 user-visible criteria. All implementation scopes remain proposed, not approved to start. Current execution/approval evidence belongs only in [progress](progress.md), not another status table here or in README. [Requirements](requirements.md) define evidence/accuracy semantics; [architecture](architecture.md) is an unaccepted implementation recommendation; [design integration](design-reference.md) remains pending.
+Scope revision: **R3 consolidated documentation**, preserving the established M01-M04 user-visible criteria. These are scope/acceptance definitions, not an independent current-status tracker; M01's subsequent start authorization is recorded in progress, while M02-M04 remain separately gated. Current execution/approval evidence belongs only in [progress](progress.md), not another status table here or in README. [Requirements](requirements.md) define evidence/accuracy semantics; [architecture](architecture.md) records the accepted planning direction; [design integration](design-reference.md) records D2 direction acceptance separately from product implementation/acceptance.
 
 The functional local MVP ends at **M02**. Accuracy qualification is a separate, uncertain **M04** outcome. Neither implies production-secure deployment. No elapsed-time estimate, guaranteed accuracy, sample-count shortcut or hardware throughput is promised.
 
