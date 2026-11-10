@@ -1,6 +1,6 @@
 # Requirements and event model
 
-Status: consolidated planning specification, not accepted implementation or measured capability. [Milestone criteria](milestones.md) govern delivery; [progress](progress.md) records actual authority and execution. Later user clarifications supersede original global-person-visibility and production-dashboard-first sequencing. The approved recall-scope decision is retained below; historical framework/dataset alternatives are not active requirements.
+Status: consolidated product specification. M01 implementation is separately authorized, but source preparation or this specification is not an accepted milestone outcome or measured capability. [Milestone criteria](milestones.md) govern delivery; [progress](progress.md) records actual authority and execution. Later user clarifications supersede original global-person-visibility and production-dashboard-first sequencing. The approved recall-scope decision is retained below; historical framework/dataset alternatives are not active requirements.
 
 ## Product boundary
 

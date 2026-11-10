@@ -1,0 +1,97 @@
+/* Evidence Desk application tokens, ported from the accepted hand-authored D2
+   domain system (2026-11-10). See docs/design-reference.md for provenance.
+   This is the project token authority, not the generic OpenDesign seed. */
+:root {
+  color-scheme: light;
+  --canvas: #f2f5f7;
+  --surface: #ffffff;
+  --surface-subtle: #e9eef1;
+  --text: #1c2b36;
+  --muted: #52606d;
+  --divider: #d7dee4;
+  --control-border: #52606d;
+  --action: #136b68;
+  --on-action: #ffffff;
+  --action-soft: #e4f2ef;
+  --focus: #136b68;
+  --warning: #80520c;
+  --warning-soft: #fff1cf;
+  --error: #a03236;
+  --error-soft: #fff1f0;
+  --evidence-bg: #1c2b36;
+  --evidence-text: #ffffff;
+  --evidence-muted: #c0ced6;
+  --evidence-line: #83d5c6;
+  --evidence-border: #90a4b0;
+  --scene-bg: #edf1f3;
+  --scene-wall: #ffffff;
+  --scene-ground: #d7e0e4;
+  --scene-rule: #71838d;
+  --scene-ink: #263e49;
+  --scene-object: #80520c;
+  --font-ui: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Consolas, monospace;
+  --text-body: 14px;
+  --text-meta: 12px;
+  --text-section: 20px;
+  --text-title: 30px;
+  --leading-body: 1.5;
+  --leading-heading: 1.2;
+  --weight-strong: 650;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --workspace-inset: 24px;
+  --panel-inset: 20px;
+  --layout-gap: 20px;
+  --stack-gap: 16px;
+  --table-inset: 14px;
+  --target-min: 44px;
+  --radius-control: 7px;
+  --radius-tag: 5px;
+  --radius-card: 10px;
+  --radius-frame: 12px;
+  --border-width: 1px;
+  --focus-width: 3px;
+  --focus-offset: 3px;
+  --workspace-max: 1560px;
+  --motion-feedback: 120ms;
+  --dialog-backdrop: #111b22b3;
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --canvas: #111b22;
+  --surface: #192630;
+  --surface-subtle: #22343f;
+  --text: #e6edf1;
+  --muted: #b3c2cd;
+  --divider: #3b505e;
+  --control-border: #91a7b6;
+  --action: #83d5c6;
+  --on-action: #173432;
+  --action-soft: #203d3c;
+  --focus: #83d5c6;
+  --warning: #f0c77e;
+  --warning-soft: #3a2b18;
+  --error: #ffb0b3;
+  --error-soft: #3a2229;
+  --scene-bg: #23323c;
+  --scene-wall: #314550;
+  --scene-ground: #405763;
+  --scene-rule: #9cb2bd;
+  --scene-ink: #edf4f6;
+  --scene-object: #f0c77e;
+  /* Inverse evidence chrome deliberately remains stable across UI themes. */
+}
+:root[data-density="compact"] {
+  --workspace-inset: 20px;
+  --panel-inset: 16px;
+  --layout-gap: 16px;
+  --stack-gap: 12px;
+  --table-inset: 10px;
+  /* Compact reduces whitespace, never important text or 44px hit targets. */
+}
