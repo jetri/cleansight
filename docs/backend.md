@@ -1,6 +1,6 @@
 # M01 backend: setup, API and local recovery
 
-This is the design-independent backend, not a finished UI, classifier or accepted M01 outcome. [Progress](progress.md) owns current authority; [M01 evidence](m01-backend-evidence.md) records tested conditions and outstanding UI/physical-camera criteria. No M02 implementation is included.
+This documents the M01 backend integrated with the Evidence Desk UI, not a classifier or accepted M01 outcome. [Progress](progress.md) owns current authority; [M01 evidence](m01-backend-evidence.md) records tested conditions and outstanding UI/physical-camera criteria. No M02 implementation is included.
 
 ## Prerequisites and isolated setup
 
@@ -22,7 +22,7 @@ docker compose --project-name littering-local up -d --wait
 
 Equivalent commands were exercised with separate task-owned paths/ports. `init_runtime` creates 0700 directories and 0600 random Django/DB secrets, never overwrites existing credentials, and does not start anything. The official PostgreSQL image is digest-pinned in `compose.yaml`; its SQL initialization hook creates `littering_app` without superuser/database-creation/role-creation rights. Credentials are mounted from protected files, not embedded in Compose or ordinary configuration. A named volume survives container recreation; it is not a backup.
 
-The supported launcher always binds `127.0.0.1`, one ASGI process, no reload. A database advisory lease refuses another supervisor for that same database. Do not bypass the launcher with a public listener or multiple web workers. Request handlers do not decode source media: capture, independent preview and bounded media jobs own that work. The backend has no `/` product page yet; inspect `http://127.0.0.1:8000/api/health` or integrate the separately owned UI branch.
+The supported launcher always binds `127.0.0.1`, one ASGI process, no reload. A database advisory lease refuses another supervisor for that same database. Do not bypass the launcher with a public listener or multiple web workers. Request handlers do not decode source media: capture, independent preview and bounded media jobs own that work. Build the [frontend](../frontend/README.md) before launch, then open `http://127.0.0.1:8000/`. The shell, local assets, API and catalogued media share this origin. `http://127.0.0.1:8000/api/health` exposes backend readiness.
 
 Stop the app with Ctrl+C, wait for process exit, then optionally `docker compose --project-name littering-local stop db`. Keep the volume. **Do not use `down -v`, delete volumes, or repair a failed initialization by silently starting empty history.** Init hooks run only on a new volume; diagnose/repair an interrupted bootstrap explicitly before migrations. Changing a secret file does not automatically rotate an existing database role password.
 
@@ -36,7 +36,7 @@ Secrets and media stay private, outside source control and a static web root. Th
 
 ## JSON/CSRF contract
 
-Routes have no trailing slash. `GET /api/health` returns a masked `data.csrf_token` and sets the strict same-site Django cookie. Send that token as `X-CSRFToken`, same-origin cookies and `Content-Type: application/json` on every POST. Do not exempt endpoints or enable broad CORS. The future Vite bundle/shell uses the same Django origin and relative API/media URLs; no Node data server is required. The shell can supply a strict local-assets CSP; the middleware preserves it while denying content by default for API/media.
+Routes have no trailing slash. `GET /api/health` returns a masked `data.csrf_token` and sets the strict same-site Django cookie. Send that token as `X-CSRFToken`, same-origin cookies and `Content-Type: application/json` on every POST. Do not exempt endpoints or enable broad CORS. The Vite bundle/shell uses the same Django origin and relative API/media URLs; no Node data server is required. The shell can supply a strict local-assets CSP; the middleware preserves it while denying content by default for API/media.
 
 Responses use `{data, warnings, production_activation:'disabled'}`. Warnings explicitly identify local development, unvalidated/unredacted footage, fixture provenance and absent production security. Names/notes are text, never trusted HTML. Local reviewer labels are not authenticated identities.
 

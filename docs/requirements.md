@@ -1,6 +1,6 @@
 # Requirements and event model
 
-Status: accepted planning specification, not product-outcome acceptance or measured accuracy capability. [Milestone criteria](milestones.md) govern delivery; [progress](progress.md) records actual authority and execution. Later user clarifications supersede original global-person-visibility and production-dashboard-first sequencing. The approved recall-scope decision is retained below; historical framework/dataset alternatives are not active requirements.
+Status: consolidated product specification. M01 implementation is separately authorized, but source preparation or this specification is not an accepted milestone outcome or measured capability. [Milestone criteria](milestones.md) govern delivery; [progress](progress.md) records actual authority and execution. Later user clarifications supersede original global-person-visibility and production-dashboard-first sequencing. The approved recall-scope decision is retained below; historical framework/dataset alternatives are not active requirements.
 
 ## Product boundary
 
@@ -103,7 +103,7 @@ Single-user feedback is sufficient early; formal roles/SLA/adjudication software
 
 Display source/transport, recording/captured-through/gaps, processing/watermark/backlog/clip readiness and preview/source-age/staleness **independently**. A connected source or healthy preview proves neither recording integrity nor inference progress. Preview refreshes may drop; source evidence may not silently drop. Frozen frames must never look live. Show unsupported envelope, quality, moved/invalid geometry, disk and coverage warnings.
 
-Required journeys: source onboarding/control; zone/exclusion editing; persistent provisional/final queue and filters; evidence playback/seek/short-step/stills/overlays/crops/history; separate feedback; local capture/replay selection and human miss bookmarks. Loading, empty, stale, error, overload, missing media and failed-write states must be honest. Background refreshes must preserve playback, selection, filters, drafts, notes, focus and scroll; stale responses cannot overwrite another selected event. Use labeled keyboard controls, visible focus, non-color status meaning and wide/compact desktop layouts without hidden actions or page overflow. [D2 design direction](design-reference.md) is accepted; product implementation/integration and its evidence remain distinct.
+Required journeys: source onboarding/control; zone/exclusion editing; persistent provisional/final queue and filters; evidence playback/seek/short-step/stills/overlays/crops/history; separate feedback; local capture/replay selection and human miss bookmarks. Loading, empty, stale, error, overload, missing media and failed-write states must be honest. Background refreshes must preserve playback, selection, filters, drafts, notes, focus and scroll; stale responses cannot overwrite another selected event. Use labeled keyboard controls, visible focus, non-color status meaning and wide/compact desktop layouts without hidden actions or page overflow. [Design integration](design-reference.md) remains pending.
 
 ## Categories, data and accuracy policy
 

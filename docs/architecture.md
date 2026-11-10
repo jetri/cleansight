@@ -1,6 +1,6 @@
 # Proposed architecture
 
-**Current design: R3, accepted for planning.** The authorized M01 backend slice now implements Django/PostgreSQL, private media and API resources; vision/evaluation and full UI behavior below remain later components, not delivered capabilities. Actual execution/acceptance belongs in [progress](progress.md). This consolidates the latest technical proposal rather than its historical alternatives. [Requirements](requirements.md) own event/evaluation semantics; [milestones](milestones.md) own acceptance and stop boundaries.
+**Current M01 implementation direction: accepted R3.** Backend source and the independently tested UI/shell source slice are locally prepared; actual combined delivery and whole-M01 acceptance are not inferred. Current authority and actual evidence live in [progress](progress.md). This consolidates the accepted direction rather than its historical alternatives. [Requirements](requirements.md) own event/evaluation semantics; [milestones](milestones.md) own acceptance and stop boundaries.
 
 ## One local application
 
@@ -35,7 +35,7 @@ Vite/Node build -> local asset bundle/manifest -> Django shell
 Replay/evaluation reuses source, observation and evidence contracts
 ```
 
-Django/ORM on ASGI/Uvicorn is the backend authority; its supported launcher and exclusive DB lease keep one local supervisor. React owns one bounded workspace mounted in a Django shell; Vite builds local assets. Shell, assets, JSON and media share one loopback origin. Node is build/development tooling, not a separate data server. No separate FastAPI, React SSR/Next.js, public CDN, Redis/Celery, Kubernetes, model-service fleet or generic provider/control framework is proposed. FastAPI/SQLite and vanilla-JS-only recommendations are superseded. **TACO is removed from active dependencies, data work and experiments.**
+Django/ORM on ASGI/Uvicorn is the browser-facing authority for the authorized M01 slice. React owns one bounded workspace mounted in a Django shell; Vite builds local assets. Shell, assets, JSON and media share one loopback origin. Node is build/development tooling, not a separate data server. No separate FastAPI, React SSR/Next.js, public CDN, Redis/Celery, Kubernetes, model-service fleet or generic provider/control framework is proposed. FastAPI/SQLite and vanilla-JS-only recommendations are superseded. **TACO is removed from active dependencies, data work and experiments.**
 
 Proposed Python vision baseline: a pinned small COCO-pretrained YOLO-family candidate with explicitly selected ByteTrack **without appearance ReID**, plus a separately versioned event-local possession/contact/release/landing/retrieval estimator and pure evidence reducer. COCO class availability is not camera support. Boxes, keypoints, overlap, optical flow and retained tracker predictions cannot manufacture physical contact evidence. A bounded targeted ROI/contact refinement may be compared only within approved feasibility scope; no open-ended model survey, training or VLM track is implied. Licenses for exact code, weights, binaries and transitive dependencies must be checked before adoption; none is cleared by this plan.
 
@@ -67,7 +67,7 @@ Pin the full zone-set/configuration at strong release, including before landing-
 
 ## Local database, capacity and containment
 
-Propose a version-pinned PostgreSQL container with a named durable volume and protected DB credentials, a non-superuser application account, Django migrations and actual readiness checks. App/media/vision stay on the host initially; Compose is proposed for the DB only. The backend implementation exercises a task-owned PostgreSQL container; this architecture document itself is not startup authority. Verified setup/recovery commands and evidence are supplied with that scoped implementation.
+M01 uses a version-pinned PostgreSQL container with a named durable volume and protected DB credentials, a non-superuser application account, Django migrations and actual readiness checks. App/media stay on the host initially; Compose is for the DB only. The separate backend slice exercised PostgreSQL persistence/recovery; final combined UI/application evidence remains separate in [progress](progress.md). No container is started by this document and no model runtime is authorized by M01.
 
 If a DB port is published, bind explicitly to loopback and verify actual reachability/engine behavior, including known older-engine localhost-publishing limitations. A named volume is not a backup. Persistence acceptance requires real PostgreSQL transaction/restart/recreation/lost-connection and independent backup/restore evidence with matching media manifests; SQLite tests cannot establish PostgreSQL parity. Never silently initialize empty history as successful recovery or casually delete a volume.
 
@@ -77,7 +77,7 @@ Use explicit measured quotas, free-space reserve, rolling expiry and bounded pin
 
 ## Security seams and limitations
 
-These are architectural seams, **not a claim of delivered production security**. The backend slice implements local containment, classified media references and domain-history guards; later identity/redaction/encryption/governance enforcement remains deferred. The MVP trusts the local OS user. Loopback/private files, secret hygiene and append-only domain history do not provide production authentication, encryption, redaction or tamper evidence. Media-tool subprocess arguments/runtime state can remain visible to the trusted local OS user; do not promise invisible camera credentials.
+These are proposed architectural seams, **not delivered controls**. The MVP trusts the local OS user. Loopback/private files, secret hygiene and append-only domain history do not provide production authentication, encryption, redaction or tamper evidence. Media-tool subprocess arguments/runtime state can remain visible to the trusted local OS user; do not promise invisible camera credentials.
 
 | Requirement family | Preserve now | Separately approved later implementation |
 | --- | --- | --- |
@@ -92,8 +92,8 @@ These are architectural seams, **not a claim of delivered production security**.
 
 Future enforcement attaches to domain operations, controlled media, classified storage and provenance. It requires real schema/data migration, encryption/redaction backfill, audit cutover, backup/retention and concurrency testing, not a free framework toggle. No generic policy engine, provider layer or service fleet is justified now.
 
-## Verification boundaries
+## Verification scope
 
-Proposed tooling is pytest for pure reducer/geometry/contracts and real PostgreSQL/media integration; Playwright Python for actual local user workflows; frontend type/build checks and an independent frozen evaluator. Backend/domain/PostgreSQL/media and direct API/RTSP checks are exercised within M01; current execution/evidence is in [progress](progress.md). Frontend/browser, detector and natural evaluation evidence must not be inferred from those tests.
+The UI uses pinned TypeScript/Vite/ESLint/Vitest and Playwright for real Chromium journeys against explicitly mocked HTTP resources, plus standalone real-Django shell/asset checks. [Frontend build/assembly/check instructions](../frontend/README.md) and [actual evidence/limits](progress.md#m01-ui-source-evidence) distinguish those checks from combined Django/PostgreSQL/capture/media verification. Pytest owns backend/domain/integration checks; a frozen accuracy evaluator and real detector remain later scope, not delivered M01 tooling.
 
 Verify deterministic timing/geometry/denominator fixtures, shared live/replay paths, local RTSP/browser E2E, failed writes/restarts/secret leakage/CSRF/media-path faults, one/two-stream soak and careful wide/compact keyboard/visual review. Django ordinary test clients relax CSRF, so negative tests must explicitly enforce checks. Preserve a failing user-flow replay before a bug fix. Fixtures establish logic, staged real observations establish feasibility, natural held-out evaluation establishes per-scope accuracy. See [milestone evidence gates](milestones.md).

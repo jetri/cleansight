@@ -1,10 +1,10 @@
 # Littering detection
 
-A proposed local, evidence-first workbench for inspecting observable unretrieved object releases from fixed cameras. It does not infer intent, identity or a legal violation.
+An experimental local, evidence-first workbench for inspecting observable unretrieved object releases from fixed cameras. It does not infer intent, identity or a legal violation.
 
 ## Current status
 
-**M01 backend implementation is in progress on a local branch.** The R3 plans were accepted, then M01 backend-first work was explicitly authorized. Evidence Desk D2 was subsequently accepted as the UI direction; frontend work has been separately routed in parallel. This branch implements backend resources only, not accepted UI flows or whole-M01 completion. Tests use generated synthetic media, not a physical camera, detector or accuracy evaluation.
+**M01 implementation is authorized; milestone acceptance remains pending.** This branch integrates the prepared backend and accepted Evidence Desk D2 UI. Combined synthetic checks are recorded in the [progress record](docs/progress.md); they do not replace required permissioned real-camera evidence or establish whole-M01 acceptance. No detector or accuracy qualification is claimed.
 
 See the single [progress record](docs/progress.md) for approval, execution, evidence and next actions, including the completed documentation landing and authority migration. Documentation-ready is not documentation-landed.
 
@@ -19,13 +19,25 @@ See the single [progress record](docs/progress.md) for approval, execution, evid
 ## Documentation
 
 - [Requirements, event model and evaluation](docs/requirements.md): authoritative observable evidence, timing, coverage and accuracy semantics.
-- [Proposed architecture](docs/architecture.md): current R3 recommendation and deferred security seams.
-- [Design-reference contract](docs/design-reference.md): supplied export inventory, provenance and pending integration review.
+- [Architecture](docs/architecture.md): accepted R3 implementation direction and deferred security seams.
+- [Design-reference contract](docs/design-reference.md): accepted D2 provenance, project token authority and original export inventory.
 - [Milestones and approval stops](docs/milestones.md): proposed M01-M04 scopes and acceptance criteria.
 
 ## Getting started and verification
 
-Backend source is Django/ORM with local Docker/PostgreSQL, FFmpeg private media and a loopback ASGI API. React/TypeScript/Vite/D2 implementation is owned by the separate UI branch; no frontend/build success is claimed here. See [backend setup, API, tests and private recovery](docs/backend.md), plus [scoped backend evidence](docs/m01-backend-evidence.md). Do not infer whole-M01 readiness from backend tests. Public [source](https://github.com/jetri/cleansight) does not expose the local application, footage, media or secrets; application access remains loopback-only.
+Django serves the React/TypeScript workspace, Vite-built local assets, API and private catalogued media from **one loopback origin**. Node is a build tool, not a second data server. Follow [backend setup, launch, API and private recovery](docs/backend.md) and [frontend build instructions](frontend/README.md). Build the frontend before starting `python -m litterwatch`, then open `http://127.0.0.1:8000/`.
+
+See [frontend build, Django assembly and test instructions](frontend/README.md). Checks exercised from the repository root on Node 26.13.0 / npm 11.20.0:
+
+```sh
+npm --prefix frontend run typecheck
+npm --prefix frontend run lint
+npm --prefix frontend run build
+npm --prefix frontend test
+npm --prefix frontend audit --audit-level=moderate
+```
+
+Build/type/lint, unit tests and separate Chromium/native-media HTTP-fixture journeys pass; the dependency audit reports zero vulnerabilities. Standalone Django shell tests are separate from real Django/PostgreSQL/capture/media integration. Exact scope, counts and missing combined/physical-camera evidence are in the [progress record](docs/progress.md). Dependencies are pinned by `frontend/package-lock.json`; built `frontend/dist/` is generated and not committed.
 
 Use only permissioned inputs. Keep footage and credentials out of version control, ordinary configuration, logs, errors and exports; configuration contains protected runtime secret references only. The eventual MVP must visibly warn **local development / unvalidated / unredacted footage**. Local safeguards are not delivered production security.
 

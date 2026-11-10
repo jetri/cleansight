@@ -1,4 +1,4 @@
-from django.urls import path
+from django.urls import include, path
 
 from workbench import views
 
@@ -25,4 +25,5 @@ urlpatterns = [
     path("api/segments/<uuid:identity>/frames", views.frames),
     path("api/frames/<uuid:identity>", views.frame_detail),
     path("media/<uuid:identity>", views.media),
+    path("", include("workbench.ui_urls")),
 ]
