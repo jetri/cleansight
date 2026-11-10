@@ -6,7 +6,7 @@ A proposed local, evidence-first workbench for inspecting observable unretrieved
 
 **Planning/design only. No application exists yet.** No camera, recording, model or accuracy run has been performed for this repository. Implementation, technical-plan acceptance and UI/design-system acceptance are not recorded. Documentation preparation does not authorize M01.
 
-See the single [progress record](docs/progress.md) for approval, execution, evidence and next actions, including its pending authority migration. Documentation-ready is not documentation-landed.
+See the single [progress record](docs/progress.md) for approval, execution, evidence and next actions, including the completed documentation landing and authority migration. Documentation-ready is not documentation-landed.
 
 ## Scope
 
