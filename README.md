@@ -4,7 +4,7 @@ A proposed local, evidence-first workbench for inspecting observable unretrieved
 
 ## Current status
 
-**Planning/design only. No application exists yet.** No camera, recording, model or accuracy run has been performed for this repository. Implementation, technical-plan acceptance and UI/design-system acceptance are not recorded. Documentation preparation does not authorize M01.
+**M01 backend implementation is in progress on a local branch.** The R3 plans were accepted, then M01 backend-first work was explicitly authorized. Evidence Desk D2 was subsequently accepted as the UI direction; frontend work has been separately routed in parallel. This branch implements backend resources only, not accepted UI flows or whole-M01 completion. Tests use generated synthetic media, not a physical camera, detector or accuracy evaluation.
 
 See the single [progress record](docs/progress.md) for approval, execution, evidence and next actions, including the completed documentation landing and authority migration. Documentation-ready is not documentation-landed.
 
@@ -25,7 +25,7 @@ See the single [progress record](docs/progress.md) for approval, execution, evid
 
 ## Getting started and verification
 
-Not available: no application exists yet, so there are no verified application launch, build, lint or test commands. Django + React/TypeScript/Vite and Docker/PostgreSQL are **proposed, not installed or accepted**. Runtime versions, compatibility and licenses remain to be checked during approved implementation. Verified commands belong here only after that work exists and has been exercised.
+Backend source is Django/ORM with local Docker/PostgreSQL, FFmpeg private media and a loopback ASGI API. React/TypeScript/Vite/D2 implementation is owned by the separate UI branch; no frontend/build success is claimed here. See [backend setup, API, tests and private recovery](docs/backend.md), plus [scoped backend evidence](docs/m01-backend-evidence.md). Do not infer whole-M01 readiness from backend tests. Public [source](https://github.com/jetri/cleansight) does not expose the local application, footage, media or secrets; application access remains loopback-only.
 
 Use only permissioned inputs. Keep footage and credentials out of version control, ordinary configuration, logs, errors and exports; configuration contains protected runtime secret references only. The eventual MVP must visibly warn **local development / unvalidated / unredacted footage**. Local safeguards are not delivered production security.
 
