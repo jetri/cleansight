@@ -1,6 +1,6 @@
 # M01 backend evidence (2026-11-10)
 
-This is a scoped evidence record, not a second tracker or whole-M01 acceptance. [Progress](progress.md) records authority and current delivery; [milestones](milestones.md) retain unchanged M01-A1 through A5. The user authorized M01, initially backend-first, and later authorized a separately owned parallel UI implementation. This branch contains no UI/design-system code, detector, tracker, model download, GPU work, natural footage or accuracy evaluator.
+This preserves the independent backend preparation evidence at `74d1a625170b2a49c6487d75705cf47edc28f2e5`, not a second tracker or whole-M01 acceptance. Later combined validation is in [integration evidence](m01-integration-evidence.md). [Progress](progress.md) records authority and current delivery; [milestones](milestones.md) retain unchanged M01-A1 through A5. The user authorized M01, initially backend-first, and later authorized a separately owned parallel UI implementation. That preparation slice contained no UI/design-system code, detector, tracker, model download, GPU work, natural footage or accuracy evaluator.
 
 ## Implemented backend slice
 

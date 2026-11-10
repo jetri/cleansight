@@ -202,11 +202,11 @@ def health(request, data):
 
     return response(
         {
-            "status": "degraded" if supervisor and supervisor.error else "local_backend_only",
+            "status": "degraded" if supervisor and supervisor.error else "local_workbench",
             "supervisor": supervisor.error if supervisor else "not_running",
             "csrf_token": get_token(request),
             "sources": Camera.objects.count(),
-            "ui": "not_implemented",
+            "ui": "django_shell",
             "detector": "not_implemented",
         }
     )
