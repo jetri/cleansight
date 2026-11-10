@@ -27,6 +27,7 @@ def start():
         host=db["HOST"],
         port=db["PORT"],
         autocommit=True,
+        application_name="littering-supervisor",
     )
     if not lease.execute("SELECT pg_try_advisory_lock(740100)").fetchone()[0]:
         lease.close()

@@ -25,7 +25,7 @@ See the single [progress record](docs/progress.md) for approval, execution, evid
 
 ## Getting started and verification
 
-Backend source is Django/ORM with local Docker/PostgreSQL, FFmpeg private media and a loopback ASGI API. React/TypeScript/Vite/D2 implementation is owned by the separate UI branch; no frontend/build success is claimed here. Backend setup, API and recovery instructions are being finalized against actual tests before this branch is offered for merge. Do not infer whole-M01 readiness from this API checkpoint.
+Backend source is Django/ORM with local Docker/PostgreSQL, FFmpeg private media and a loopback ASGI API. React/TypeScript/Vite/D2 implementation is owned by the separate UI branch; no frontend/build success is claimed here. See [backend setup, API, tests and private recovery](docs/backend.md), plus [scoped backend evidence](docs/m01-backend-evidence.md). Do not infer whole-M01 readiness from backend tests. Public [source](https://github.com/jetri/cleansight) does not expose the local application, footage, media or secrets; application access remains loopback-only.
 
 Use only permissioned inputs. Keep footage and credentials out of version control, ordinary configuration, logs, errors and exports; configuration contains protected runtime secret references only. The eventual MVP must visibly warn **local development / unvalidated / unredacted footage**. Local safeguards are not delivered production security.
 

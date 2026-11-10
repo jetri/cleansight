@@ -24,6 +24,7 @@ def running_backend(runtime):
     with socket.socket() as sock:
         sock.bind(("127.0.0.1", 0))
         port = sock.getsockname()[1]
+    started = time.monotonic()
     env = {**os.environ, "LITTERING_DB_NAME": connection.settings_dict["NAME"]}
     log = runtime / f"backend-{port}.log"
     with log.open("wb") as output:
@@ -40,6 +41,17 @@ def running_backend(runtime):
             if process.poll() is None:
                 process.terminate()
                 process.wait(timeout=20)
+            print(
+                json.dumps(
+                    {
+                        "kind": "backend_process_fixture",
+                        "port": port,
+                        "elapsed_seconds": round(time.monotonic() - started, 3),
+                        "exit_code": process.returncode,
+                        "scope": "synthetic-backend-only",
+                    }
+                )
+            )
 
 
 def wait_until(function, timeout=20):
@@ -223,6 +235,35 @@ def test_socket_camera_capture_replay_feedback_restart(private_runtime, syntheti
             assert duplicate.wait(timeout=10) != 0
             assert "Backend startup failed" in duplicate_log.read_text()
         assert process.poll() is None
+        # Lose only this test database's supervisor lease while actual capture runs.
+        post(f"/api/cameras/{cameras[0]['id']}/recording", {"enabled": True})
+        active = wait_until(
+            lambda: next(
+                (
+                    s
+                    for s in get("/api/sessions")
+                    if not s["stopped_at"] and s["health"].get("captured_through")
+                ),
+                None,
+            )
+        )
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname=current_database() AND application_name='littering-supervisor' AND usename=current_user"
+            )
+            assert cursor.fetchall() == [(True,)]
+        wait_until(lambda: get("/api/health")["status"] == "degraded")
+        from workbench.models import CaptureSession
+        from workbench.processes import identity
+
+        child = CaptureSession.objects.get(pk=active["id"]).child_identity
+        wait_until(lambda: identity(child["pid"]) != child["generation"])
+        stopped = wait_until(
+            lambda: s if (s := get(f"/api/sessions/{active['id']}"))["stopped_at"] else None
+        )
+        assert stopped["health"]["recording"] == "stopped"
+        assert stopped["health"]["reason"] == "supervisor_failure"
+        post(f"/api/cameras/{cameras[0]['id']}/recording", {"enabled": False})
     assert "Traceback" not in log.read_text()
     with running_backend(private_runtime) as (_, base, _):
         wait_until(lambda: call("/api/health"))

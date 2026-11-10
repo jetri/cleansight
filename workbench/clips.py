@@ -4,7 +4,7 @@ from django.utils import timezone
 
 from .media import MediaFailure, render_span, snapshot, validate_video
 from .models import Artifact, ClipJob, FrameJob
-from .storage import StoragePressure, artifact_path, publish
+from .storage import StoragePressure, publish, verified_path
 
 
 def assemble_frame(job):
@@ -78,7 +78,7 @@ def assemble(job):
             try:
                 if artifact.status != "available":
                     raise MediaFailure("source_unavailable")
-                validate_video(artifact_path(artifact))
+                validate_video(verified_path(artifact))
                 segments.append(segment)
             except (OSError, MediaFailure):
                 Artifact.objects.filter(pk=artifact.pk).update(status="missing")

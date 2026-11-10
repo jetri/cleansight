@@ -182,6 +182,30 @@ def test_retention_pins_quota_and_missing(db, private_runtime, monkeypatch):
     assert other.status == "missing"
 
 
+def test_permissive_restore_directory_fails_closed(private_runtime):
+    from workbench.storage import media_root
+
+    path = private_runtime / "media"
+    path.chmod(0o755)
+    with pytest.raises(StoragePressure, match="Private media directory required"):
+        media_root()
+    path.chmod(0o700)
+    assert media_root() == path
+
+
+def test_changed_same_size_media_is_not_reused_as_original_evidence(db, private_runtime):
+    from workbench.storage import verified_path
+
+    path = private_runtime / "media" / "identity.jpg"
+    path.write_bytes(b"fixture-one")
+    artifact = publish(path, "frame_unredacted", "image/jpeg")
+    artifact_path(artifact).write_bytes(b"fixture-two")
+    with pytest.raises(OSError, match="media_missing_or_changed"):
+        verified_path(artifact)
+    artifact.refresh_from_db()
+    assert artifact.status == "missing"
+
+
 def test_catalog_path_does_not_expose_filesystem(db, private_runtime):
     staging = private_runtime / "media" / "temporary.jpg"
     staging.write_bytes(b"fixture-only")

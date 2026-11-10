@@ -20,6 +20,7 @@ from .models import (
     Review,
     Transition,
 )
+from .provenance import versions
 from .storage import pin
 
 STATES = [
@@ -137,6 +138,7 @@ def configure(camera, geometry, settings):
 
 
 def recording(camera, desired):
+    camera = Camera.objects.get(pk=camera.pk)
     if type(desired) is not bool or (desired and not camera.active_revision_id):
         raise ValidationError("A validated configuration is required before recording")
     Camera.objects.filter(pk=camera.pk).update(desired_recording=desired)
@@ -162,7 +164,9 @@ def replay(session, mode="media_replay"):
                 pin(segment.artifact, "replay-input", 3600)
     if not segments:
         raise ValidationError("No catalogued source segments to replay")
-    configuration = session.camera.active_revision or session.configuration
+    configuration = (
+        Camera.objects.get(pk=session.camera_id).active_revision or session.configuration
+    )
     return ProcessingRun.objects.create(
         session=session,
         configuration=configuration,
@@ -173,11 +177,7 @@ def replay(session, mode="media_replay"):
             "gaps": list(session.gaps.values("reason", "start_us", "end_us")),
             "clock": "epoch_source_microseconds_not_wall_time",
         },
-        versions={
-            "application": "0.1.0",
-            "method": "M01-media-only-no-detector",
-            "configuration_sha256": configuration.digest,
-        },
+        versions={**versions(), "configuration_sha256": configuration.digest},
     )
 
 

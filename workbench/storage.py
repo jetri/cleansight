@@ -15,6 +15,7 @@ from django.utils import timezone
 from litterwatch.runtime import runtime_root
 
 from .models import Artifact, EvidencePin
+from .provenance import versions
 
 
 class StoragePressure(Exception):
@@ -34,6 +35,21 @@ def artifact_path(artifact):
     path = root / artifact.relative_path
     if path.parent.resolve() != root or path.is_symlink() or path.resolve().parent != root:
         raise ValidationError("Invalid catalogued media reference")
+    return path
+
+
+def verified_path(artifact):
+    """Verify retained input identity before derivative/replay pixel work, not security audit."""
+    path = artifact_path(artifact)
+    try:
+        if artifact.status != "available" or path.stat().st_size != artifact.byte_size:
+            raise OSError("media_unavailable")
+        with path.open("rb") as stream:
+            if hashlib.file_digest(stream, "sha256").hexdigest() != artifact.sha256:
+                raise OSError("media_content_changed")
+    except OSError:
+        Artifact.objects.filter(pk=artifact.pk, status="available").update(status="missing")
+        raise OSError("media_missing_or_changed") from None
     return path
 
 
@@ -73,7 +89,7 @@ def publish(path, classification, mime, lineage=(), metadata=None, ttl_seconds=3
         byte_size=target.stat().st_size,
         sha256=digest,
         lineage=list(lineage),
-        metadata=metadata or {},
+        metadata={**(metadata or {}), "producer": versions()},
         expires_at=timezone.now() + timedelta(seconds=ttl_seconds),
     )
 

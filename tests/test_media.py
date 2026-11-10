@@ -10,6 +10,8 @@ from workbench.clips import assemble, assemble_frame, coverage
 from workbench.media import validate_video
 from workbench.storage import artifact_path
 
+from .conftest import GEOMETRY
+
 
 @pytest.mark.django_db
 def test_full_clip_extension_replay_frame_and_corrupt_spans(captured):
@@ -17,7 +19,13 @@ def test_full_clip_extension_replay_frame_and_corrupt_spans(captured):
     one = services.replay(session, "observation_fixture")
     two = services.replay(session, "observation_fixture")
     assert one.id != two.id and one.input_manifest == two.input_manifest
+    assert len(one.versions["backend_code_sha256"]) == 64
+    assert one.versions["ffmpeg"].startswith("ffmpeg version")
+    assert one.versions["dependencies"]["Django"] == "5.2.19"
     event = services.create_fixture(one, epoch, "synthetic-release", 20_000_000)
+    newer = services.configure(camera, GEOMETRY, {"segment_seconds": 3})
+    assert services.replay(session, "observation_fixture").configuration_id == newer.id
+    assert event.run.configuration_id == one.configuration_id != newer.id
     first = services.request_clip(event, 10_000_000, 53_000_000)
     assert [first.start_us, first.end_us] == [5_000_000, 65_000_000]
     assemble(first)
@@ -72,6 +80,22 @@ def test_internal_frame_gap_is_not_continuous_coverage():
     available, missing = coverage([segment], 0, 4_000_000)
     assert available == [[0, 1_000_000], [2_000_000, 4_000_000]]
     assert missing == [[1_000_000, 2_000_000]]
+
+
+def test_estimated_time_without_original_pts_is_not_complete_source(monkeypatch):
+    import json
+
+    from workbench.media import MediaFailure, probe
+
+    payload = {
+        "streams": [{"avg_frame_rate": "10/1", "time_base": "1/1000"}],
+        "frames": [{"best_effort_timestamp_time": "0.0"}],
+    }
+    monkeypatch.setattr(
+        "workbench.media.run_tool", lambda *args, **kwargs: json.dumps(payload).encode()
+    )
+    with pytest.raises(MediaFailure):
+        probe("fixture-without-original-timestamps")
 
 
 def test_real_pts_gap_is_indexed(private_runtime):

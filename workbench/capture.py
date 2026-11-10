@@ -10,6 +10,7 @@ import subprocess
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
+from datetime import UTC, datetime
 from pathlib import Path
 from urllib.parse import urlsplit
 
@@ -202,6 +203,7 @@ class Recorder:
             if path.parent.resolve() != self.directory.resolve() or not path.name.endswith(".ts"):
                 raise MediaFailure("invalid_segment_publication")
             try:
+                sealed_at = datetime.fromtimestamp(path.stat().st_mtime, tz=UTC)
                 index = validate_video(path, max_seconds=60)
                 raw_start, raw_end = index["start_us"], index["end_us"]
                 signature = [
@@ -263,7 +265,7 @@ class Recorder:
                     start_us=start,
                     end_us=end,
                     index=index,
-                    arrival_at=timezone.now(),
+                    arrival_at=sealed_at,
                 )
                 # Preserve future source spans of already-requested event clips.
                 if ClipJob.objects.filter(
@@ -277,7 +279,8 @@ class Recorder:
                     transport="connected",
                     recording="sealed",
                     captured_through={"epoch": str(self.epoch.id), "source_us": end},
-                    last_sealed_at=timezone.now().isoformat(),
+                    last_sealed_at=sealed_at.isoformat(),
+                    catalogued_at=timezone.now().isoformat(),
                 )
             except (MediaFailure, OSError):
                 CoverageGap.objects.create(
@@ -290,6 +293,8 @@ class Recorder:
         self.session.save(update_fields=["health"])
 
     def finish(self, reason):
+        if self.session.stopped_at is not None:
+            return
         if self.process:
             stop_process(self.process)
             try:
@@ -440,6 +445,13 @@ class Supervisor:
             for recorder in self.recorders.values():
                 if recorder.process:
                     stop_process(recorder.process)
+                if self.error:
+                    try:
+                        recorder.finish("supervisor_failure")
+                    except Exception:
+                        # If DB itself is down, API is degraded/unavailable and startup
+                        # later records the unverified interval, never a clean negative.
+                        pass
             close_old_connections()
 
     def stop(self):

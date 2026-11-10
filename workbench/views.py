@@ -104,7 +104,11 @@ def revision_data(revision):
 
 
 def session_data(session):
+    from litterwatch.asgi import supervisor
+
     health = dict(session.health)
+    if session.stopped_at is None and supervisor and supervisor.error:
+        health.update(transport="unknown", recording="unverified", reason=supervisor.error)
     preview = health.get("preview")
     if isinstance(preview, dict) and preview.get("source_observed_at"):
         age = max(
@@ -116,6 +120,7 @@ def session_data(session):
         health["preview"] = {
             **preview,
             "source_age_seconds": age,
+            "age_basis": "sealed_recording_host_mtime_not_camera_utc",
             "stale": age > 8
             or session.stopped_at is not None
             or health.get("transport") != "connected",

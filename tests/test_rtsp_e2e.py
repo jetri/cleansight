@@ -120,6 +120,19 @@ def rtsp_fixture(source):
     try:
         subprocess.run(command, check=True, capture_output=True, timeout=20)
         time.sleep(0.5)
+        print(
+            json.dumps(
+                {
+                    "kind": "synthetic_rtsp_fixture",
+                    "port": port,
+                    "source_size": "320x240",
+                    "source_fps": 10,
+                    "fixture_seconds": 72,
+                    "transport": "TCP",
+                    "container": name,
+                }
+            )
+        )
         yield url, publish
     finally:
         primary = sys.exception()
@@ -248,6 +261,18 @@ def test_two_rtsp_reconnect_epochs_and_unclean_application_restart(private_runti
                 timeout=30,
             )
             assert resumed["epochs"][0]["id"] != resumed["epochs"][-1]["id"]
+            print(
+                json.dumps(
+                    {
+                        "kind": "rtsp_reconnect_result",
+                        "source_count": 2,
+                        "epoch_count": len(resumed["epochs"]),
+                        "gap_count": len(resumed["gaps"]),
+                        "recorded_through": resumed["health"]["captured_through"],
+                        "fixture_outcome": "INCOMPLETE",
+                    }
+                )
+            )
             # Simulate actual application death after durable child registration.
             child_records = list(
                 CaptureSession.objects.filter(stopped_at=None).values_list(

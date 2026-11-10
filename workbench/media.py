@@ -52,8 +52,8 @@ def probe(path, max_seconds=360):
         data = json.loads(raw)
         stream = data["streams"][0]
         frames = data["frames"]
-        if not 1 <= len(frames) <= 21600:
-            raise ValueError
+        if not 1 <= len(frames) <= 21600 or any(f.get("pts") is None for f in frames):
+            raise ValueError  # Estimated timestamps alone cannot establish source coverage.
         times = [round(float(f["best_effort_timestamp_time"]) * 1_000_000) for f in frames]
         if any(b <= a for a, b in zip(times, times[1:], strict=False)):
             raise ValueError
@@ -172,7 +172,7 @@ def render_span(segments, start_us, end_us):
 
 
 def snapshot(segment, source_us):
-    from .storage import artifact_path
+    from .storage import verified_path
 
     if not segment.start_us <= source_us < segment.end_us:
         raise ValidationError("Frame lies outside segment")
@@ -189,7 +189,7 @@ def snapshot(segment, source_us):
                 "error",
                 "-y",
                 "-i",
-                str(artifact_path(segment.artifact)),
+                str(verified_path(segment.artifact)),
                 "-vf",
                 f"select=eq(n\\,{index})",
                 "-frames:v",
