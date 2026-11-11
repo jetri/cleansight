@@ -189,8 +189,13 @@ class FrameJob(Record):
     reason = models.CharField(max_length=80, blank=True)
 
 
+class ReplayPinGroup(Record):
+    pass
+
+
 class EvidencePin(Record):
     artifact = models.ForeignKey(Artifact, on_delete=models.PROTECT, related_name="pins")
+    replay_group = models.ForeignKey(ReplayPinGroup, null=True, on_delete=models.PROTECT)
     purpose = models.CharField(max_length=100)
     expires_at = models.DateTimeField()
     released_at = models.DateTimeField(null=True)

@@ -9,12 +9,13 @@ from datetime import timedelta
 from pathlib import Path
 
 from django.core.exceptions import ValidationError
-from django.db import transaction
+from django.db import connection, transaction
+from django.db.models import Q, Sum
 from django.utils import timezone
 
 from litterwatch.runtime import runtime_root
 
-from .models import Artifact, EvidencePin
+from .models import Artifact, EvidencePin, ReplayPinGroup
 from .provenance import versions
 
 
@@ -95,22 +96,53 @@ def publish(path, classification, mime, lineage=(), metadata=None, ttl_seconds=3
 
 
 @transaction.atomic
-def pin(artifact, purpose, seconds):
+def _reserve(artifacts, purpose, seconds, grouped=False):
     if (
-        not isinstance(seconds, int)
+        type(seconds) is not int
         or not 1 <= seconds <= 7 * 86400
         or not purpose
         or len(purpose) > 100
     ):
         raise ValidationError("A pin needs purpose and bounded expiry (up to seven days)")
-    artifact = Artifact.objects.select_for_update().get(pk=artifact.pk)
-    if artifact.status != "available":
+    identities = {artifact.pk for artifact in artifacts}
+    if not identities:
+        return []
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT pg_advisory_xact_lock(740103)")
+    locked = list(Artifact.objects.select_for_update().filter(pk__in=identities).order_by("pk"))
+    if len(locked) != len(identities) or any(a.status != "available" for a in locked):
         raise ValidationError("Unavailable evidence cannot be pinned")
-    if EvidencePin.objects.filter(released_at=None, expires_at__gt=timezone.now()).count() >= 1000:
-        raise StoragePressure("Evidence pin limit reached")
-    return EvidencePin.objects.create(
-        artifact=artifact, purpose=purpose, expires_at=timezone.now() + timedelta(seconds=seconds)
+    now = timezone.now()
+    active = EvidencePin.objects.filter(released_at=None, expires_at__gt=now)
+    slots = (
+        active.filter(replay_group=None).count()
+        + active.exclude(replay_group=None).values("replay_group").distinct().count()
     )
+    if slots >= 1000:
+        raise StoragePressure("Evidence pin limit reached")
+    protected = (
+        Artifact.objects.filter(
+            Q(pk__in=active.values("artifact_id")) | Q(pk__in=identities)
+        ).aggregate(total=Sum("byte_size"))["total"]
+        or 0
+    )
+    if protected > int(os.environ.get("LITTERING_QUOTA_BYTES", str(10 * 1024**3))):
+        raise StoragePressure("Evidence protection budget exceeded")
+    group = ReplayPinGroup.objects.create() if grouped else None
+    expiry = now + timedelta(seconds=seconds)
+    pins = [
+        EvidencePin(artifact=artifact, purpose=purpose, expires_at=expiry, replay_group=group)
+        for artifact in locked
+    ]
+    return EvidencePin.objects.bulk_create(pins)
+
+
+def pin(artifact, purpose, seconds):
+    return _reserve([artifact], purpose, seconds)[0]
+
+
+def pin_replay(artifacts):
+    return _reserve(artifacts, "replay-input", 3600, grouped=True)
 
 
 def sweep():

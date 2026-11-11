@@ -22,7 +22,7 @@ from .models import (
     Transition,
 )
 from .provenance import versions
-from .storage import pin
+from .storage import pin, pin_replay
 
 STATES = [
     "NO_EVENT",
@@ -151,6 +151,7 @@ def replay(session, mode="media_replay"):
     if mode not in {"media_replay", "observation_fixture"}:
         raise ValidationError("No model/inference mode is available in M01")
     segments = []
+    artifacts = []
     for epoch in session.epochs.order_by("sequence"):
         for segment in epoch.segments.select_related("artifact"):
             segments.append(
@@ -163,9 +164,10 @@ def replay(session, mode="media_replay"):
                 }
             )
             if segment.artifact.status == "available":
-                pin(segment.artifact, "replay-input", 3600)
+                artifacts.append(segment.artifact)
     if not segments:
         raise ValidationError("No catalogued source segments to replay")
+    pin_replay(artifacts)
     configuration = session.configuration
     return ProcessingRun.objects.create(
         session=session,
