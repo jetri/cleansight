@@ -94,6 +94,10 @@ def preview(segment):
         close_old_connections()
 
 
+class InvalidInput(MediaFailure):
+    """A sealed source segment failed strict media or clock validation."""
+
+
 class Recorder:
     def __init__(self, camera):
         self.camera = camera
@@ -204,7 +208,12 @@ class Recorder:
                 raise MediaFailure("invalid_segment_publication")
             try:
                 sealed_at = datetime.fromtimestamp(path.stat().st_mtime, tz=UTC)
-                index = validate_video(path, max_seconds=60)
+                try:
+                    index = validate_video(path, max_seconds=60)
+                except MediaFailure as exc:
+                    if str(exc) in {"media_tool_failed", "media_index_invalid_or_segment_too_long"}:
+                        raise InvalidInput("media_or_clock_unverified") from exc
+                    raise
                 raw_start, raw_end = index["start_us"], index["end_us"]
                 signature = [
                     index[k]
@@ -217,7 +226,7 @@ class Recorder:
                 if self.last_end is not None and (
                     start < self.last_end - 1000 or signature != self.signature
                 ):
-                    raise MediaFailure("source_clock_or_format_discontinuity")
+                    raise InvalidInput("source_clock_or_format_discontinuity")
                 if self.last_end is not None and start > self.last_end + 1000:
                     CoverageGap.objects.create(
                         session=self.session,
@@ -289,7 +298,7 @@ class Recorder:
                     start_us=self.last_end,
                     reason="media_or_clock_unverified",
                 )
-                raise MediaFailure("media_or_clock_unverified") from None
+                raise
         self.session.save(update_fields=["health"])
 
     def finish(self, reason):
@@ -353,24 +362,44 @@ class Supervisor:
                     recorder.launch()
                 if not recorder.process:
                     continue
-                recorder.catalog()
+                invalid_input = False
+                try:
+                    recorder.catalog()
+                except InvalidInput:
+                    if camera.kind != "rtsp":
+                        raise
+                    invalid_input = True
                 if recorder.preview_future and recorder.preview_future.done():
-                    recorder.session.health["preview"] = recorder.preview_future.result()
-                    recorder.session.save(update_fields=["health"])
+                    result = recorder.preview_future.result()
+                    if not invalid_input and result.get("epoch") == str(recorder.epoch.id):
+                        recorder.session.health["preview"] = result
+                        recorder.session.save(update_fields=["health"])
                     recorder.preview_future = None
                 if (
-                    recorder.latest
+                    not invalid_input
+                    and recorder.latest
                     and recorder.preview_future is None
                     and not any(r.preview_future for r in self.recorders.values())
                 ):
                     recorder.preview_future = self.preview_pool.submit(preview, recorder.latest)
                     recorder.latest = None
                 if (
-                    recorder.process.poll() is not None
+                    invalid_input
+                    or recorder.process.poll() is not None
                     or time.monotonic() - recorder.last_progress > 20
                 ):
                     stop_process(recorder.process)
-                    recorder.catalog()
+                    if not invalid_input:
+                        try:
+                            recorder.catalog()
+                        except InvalidInput:
+                            if camera.kind != "rtsp":
+                                raise
+                            invalid_input = True
+                    if invalid_input:
+                        recorder.process = None
+                        recorder.latest = None
+                        recorder.session.health["preview"] = "unavailable"
                     interrupt_epoch(recorder.epoch, "stream_gap", recorder.last_end)
                     CoverageGap.objects.create(
                         session=recorder.session,
