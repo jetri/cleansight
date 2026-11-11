@@ -43,11 +43,11 @@ Responses use `{data, warnings, production_activation:'disabled'}`. Warnings exp
 | Resource | Actual contract |
 | --- | --- |
 | `GET/POST /api/cameras` | List or create `{name,kind,secret_ref,permission_ref,data_provenance?}`. Kind is `rtsp` or `file_fixture`; at most two registered identities. Provenance is synthetic/staged_real/natural/unclassified. |
-| `GET/POST /api/cameras/:id` | Read or edit name/secret_ref/permission_ref; stop and await shutdown before changing source reference. |
+| `GET/POST /api/cameras/:id` | Read or edit name/secret_ref/permission_ref; name edits and unchanged references are allowed during capture. Stop and await shutdown before changing either reference. |
 | `GET/POST /api/cameras/:id/configurations` | Immutable revisions; POST `{geometry,settings?}`. Existing run/event revisions stay pinned. |
 | `POST /api/cameras/:id/recording` | `{enabled:true|false}` returns 202 desired state, not immediate connection success. Poll sessions. Reconnect is stop, await stopped, then start. |
 | `GET /api/sessions?camera=:id`, `/api/sessions/:id` | Latest sessions, independent health, epochs/gaps; detail includes segment IDs/spans/media IDs/status, never private paths. |
-| `POST /api/sessions/:id/replays`, `GET /api/runs?session=:id` | New persistent run with frozen input/versions; mode media_replay or observation_fixture. No detector starts. |
+| `POST /api/sessions/:id/replays`, `GET /api/runs?session=:id` | New persistent run with frozen input/versions and the original session configuration, not the latest camera revision; mode media_replay or observation_fixture. Existing history is unchanged. No detector starts. |
 | `GET /api/runs/:id/timeline?segment=0&frame=0` | Up to 256 source-indexed frames, original PTS/timebase, gaps/unavailability and next cursor. Scheduling never reinterprets source time. |
 | `GET /api/events?camera=&run=&outcome=&reason=&phase=` | Latest <=100 fixture events, optional filters; phase provisional/final. Reason matches retained history. |
 | `GET/POST /api/runs/:id/events`, `GET /api/events/:id` | Fixture creation `{epoch,release_key,release_us}` only on fixture runs; same-key exact retry is idempotent. Read phase, immutable history, provenance, clips and independent reviews. |

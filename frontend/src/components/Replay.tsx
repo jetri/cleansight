@@ -53,7 +53,7 @@ export function Replay({ api, cameras, sessions, runs, active }:
     } finally { lock.current = false; setPending(false); }
   }
   return <div className="stack">
-    <header className="page-heading"><div><p className="eyebrow">M01 / source-clock preserving replay</p><h1>Capture & replay</h1><p>Create a new frozen run from catalogued local recording. Replay identity changes; source identity, epochs and original clock do not.</p></div>
+    <header className="page-heading"><div><p className="eyebrow">M01 / source-clock preserving replay</p><h1>Capture & replay</h1><p>Create a new frozen run from catalogued local recording. Replay identity changes; source identity, recorded configuration, epochs and original clock do not.</p></div>
       <Button variant="primary" disabled={!sessions.data?.length} onClick={() => setOpen(true)}>Create replay run</Button></header>
     <Notice tone="info">No detector starts from replay. Source-frame inspection uses the persisted index; browser video playback uses derived event clips, not a fake video or an assumed raw-TS format.</Notice>
     {sessions.error && <Notice tone="error">Sessions could not be refreshed. {sessions.error} <Button onClick={sessions.refresh}>Reload sessions</Button></Notice>}
@@ -87,7 +87,7 @@ export function Replay({ api, cameras, sessions, runs, active }:
     <Modal open={open} title="Create local replay run" onRequestClose={() => { if (!lock.current) setOpen(false); }} actions={<>
       <Button disabled={pending} onClick={() => setOpen(false)}>Close / retain selection</Button><Button variant="primary" disabled={pending || !sessionId || !!unresolved} onClick={() => { void createRun(); }}>{pending ? 'Creating…' : 'Create new run'}</Button>
     </>}>
-      <div className="stack"><Notice tone="info">This stores a new run ID and pins its current source manifest and configuration. It does not start a detector, alter source timestamps or upload media.</Notice>
+      <div className="stack"><Notice tone="info">This stores a new run ID, freezes the catalogued source manifest and pins the original session configuration, not the camera’s latest revision. It does not start a detector, alter source timestamps or upload media.</Notice>
         <Select label="Captured source session" value={sessionId} onChange={event => setSessionId(event.target.value)} disabled={pending}><option value="">Choose a captured session</option>{sessions.data?.map(session => <option key={session.id} value={session.id}>{cameras.data?.find(camera => camera.id === session.camera)?.name ?? shortId(session.camera)} / {shortId(session.id)} / {session.provenance}</option>)}</Select>
         <Select label="Run mode" value={mode} onChange={event => setMode(event.target.value as Run['mode'])} disabled={pending}><option value="media_replay">Media replay / indexed inspection</option><option value="observation_fixture">Observation fixture / NOT MODEL EVIDENCE</option></Select>
         {selectedSession && <Facts items={[

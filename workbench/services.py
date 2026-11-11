@@ -82,9 +82,10 @@ def edit_camera(camera, values):
     camera = Camera.objects.select_for_update().get(pk=camera.pk)
     if not values or set(values) - {"name", "secret_ref", "permission_ref"}:
         raise ValidationError("Edit name, protected secret_ref or permission_ref only")
-    if "secret_ref" in values and (
-        camera.desired_recording or camera.sessions.filter(stopped_at=None).exists()
-    ):
+    if any(
+        key in values and values[key] != getattr(camera, key)
+        for key in ("secret_ref", "permission_ref")
+    ) and (camera.desired_recording or camera.sessions.filter(stopped_at=None).exists()):
         raise ValidationError(
             "Stop and await recording shutdown before changing a source reference"
         )
@@ -165,9 +166,7 @@ def replay(session, mode="media_replay"):
                 pin(segment.artifact, "replay-input", 3600)
     if not segments:
         raise ValidationError("No catalogued source segments to replay")
-    configuration = (
-        Camera.objects.get(pk=session.camera_id).active_revision or session.configuration
-    )
+    configuration = session.configuration
     return ProcessingRun.objects.create(
         session=session,
         configuration=configuration,

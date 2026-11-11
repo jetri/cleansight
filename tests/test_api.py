@@ -59,6 +59,77 @@ def test_persistent_queue_and_config_api(fixture_event):
 
 
 @pytest.mark.django_db
+@pytest.mark.parametrize("desired", [False, True])
+def test_active_session_identity_edit_preserves_protected_references(fixture_event, desired):
+    """The identity form promises name edits while both references remain locked."""
+    camera = fixture_event.run.session.camera
+    services.recording(camera, desired)
+    client = Client(HTTP_HOST="127.0.0.1", enforce_csrf_checks=True)
+    token = client.get("/api/health").json()["data"]["csrf_token"]
+    values = {
+        "name": "Renamed during capture",
+        "secret_ref": camera.secret_ref,
+        "permission_ref": camera.permission_ref,
+    }
+
+    def edit(payload):
+        return client.post(
+            f"/api/cameras/{camera.id}",
+            data=json.dumps(payload),
+            content_type="application/json",
+            HTTP_X_CSRFTOKEN=token,
+        )
+
+    # Unchanged disabled fields sent by the normal UI are not reference changes.
+    result = edit(values)
+    assert result.status_code == 200
+    assert result.json()["data"]["name"] == values["name"]
+    for field in ["secret_ref", "permission_ref"]:
+        assert edit({**values, "name": "Must not persist", field: "changed-reference"}).status_code == 400
+        camera.refresh_from_db()
+        assert camera.name == values["name"]
+        assert getattr(camera, field) == values[field]
+    # Recording OFF still locks references until the active session has ended.
+    services.recording(camera, False)
+    assert edit({"secret_ref": "changed-reference"}).status_code == 400
+    session = fixture_event.run.session
+    session.stopped_at = timezone.now()
+    session.save(update_fields=["stopped_at"])
+    assert edit({"secret_ref": "changed-reference", "permission_ref": "changed-permission"}).status_code == 200
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("mode", ["media_replay", "observation_fixture"])
+def test_replay_uses_recorded_configuration_after_camera_reconfiguration(captured, mode):
+    """Walkthrough A4 requires replay of the original session configuration."""
+    camera, session, _ = captured
+    client = Client(HTTP_HOST="127.0.0.1")
+
+    def create_run():
+        result = client.post(
+            f"/api/sessions/{session.id}/replays",
+            data=json.dumps({"mode": mode}),
+            content_type="application/json",
+        )
+        assert result.status_code == 201
+        return result.json()["data"]
+
+    original = create_run()
+    newer = services.configure(camera, GEOMETRY, {"segment_seconds": 3})
+    replayed = create_run()
+    assert replayed["id"] != original["id"]
+    assert replayed["configuration"] == original["configuration"] == str(session.configuration_id)
+    assert replayed["versions"]["configuration_sha256"] == session.configuration.digest
+    assert replayed["input_manifest"] == original["input_manifest"]
+    for run in client.get(f"/api/runs?session={session.id}").json()["data"]:
+        assert run["configuration_id"] == str(session.configuration_id)
+    session.refresh_from_db()
+    camera.refresh_from_db()
+    assert camera.active_revision_id == newer.id != session.configuration_id
+    assert ProcessingRun.objects.get(pk=original["id"]).configuration_id == session.configuration_id
+
+
+@pytest.mark.django_db
 def test_queue_filters_use_serialized_outcome_without_transitions(fixture_event):
     event = fixture_event
     final = services.create_fixture(event.run, event.epoch, "final-sibling", 0)

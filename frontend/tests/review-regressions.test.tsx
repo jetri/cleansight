@@ -6,7 +6,7 @@ import { ApiError } from '../src/api/client';
 import type { FrameJob, Session } from '../src/api/types';
 import { SourcePreview } from '../src/components/Sources';
 import { shortId } from '../src/format';
-import { frame, run, session, uuid } from './data';
+import { camera, frame, run, session, uuid } from './data';
 import { deferred, eventFixture, mockApi } from './fixtures';
 
 const lost = () => new ApiError('connection_unavailable', 'Injected lost acknowledgement', true);
@@ -52,6 +52,24 @@ describe('review regressions through executable workspace behavior', () => {
     render(<SourcePreview session={live} updatedAt={Date.now()} disconnected={reason === 'disconnected'} />);
     expect(screen.getByText('STALE STILL / NOT LIVE')).toBeInTheDocument();
     expect(screen.queryByText('Near-live sealed-source still')).not.toBeInTheDocument();
+  });
+
+  it('saves an active-session name edit with both unchanged references locked', async () => {
+    const user = userEvent.setup();
+    const api = mockApi({ sessions: vi.fn(async () => [{ ...session, stopped_at: null, status: 'recording' }]) });
+    render(<App api={api} />);
+    await user.click(screen.getByRole('tab', { name: 'Sources & zones' }));
+    await user.click(await screen.findByRole('button', { name: 'Edit identity' }));
+    const dialog = within(screen.getByRole('dialog', { name: 'Edit source identity' }));
+    expect(dialog.getByRole('textbox', { name: 'Protected source reference' })).toBeDisabled();
+    expect(dialog.getByRole('textbox', { name: 'Permission evidence reference' })).toBeDisabled();
+    const name = dialog.getByRole('textbox', { name: 'Source name' });
+    await user.clear(name);
+    await user.type(name, 'Renamed while recording');
+    await user.click(dialog.getByRole('button', { name: 'Save identity' }));
+    expect(await screen.findByText('Source identity Renamed while recording was saved by the server. Recording state is confirmed separately.')).toBeInTheDocument();
+    expect(screen.queryByRole('dialog', { name: 'Edit source identity' })).not.toBeInTheDocument();
+    expect(api.editCamera).toHaveBeenCalledWith(camera.id, { name: 'Renamed while recording', secret_ref: camera.secret_ref, permission_ref: camera.permission_ref });
   });
 
   it('retains every unknown replay across mode and session switches without retrying', async () => {
