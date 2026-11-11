@@ -1,5 +1,6 @@
 """Clip jobs preserve available spans separately, never splice a gap into continuity."""
 
+from django.core.exceptions import ValidationError
 from django.utils import timezone
 
 from .media import MediaFailure, render_span, snapshot, validate_video
@@ -26,7 +27,7 @@ def assemble_frame(job):
             ttl_seconds=120,
         )
         job.status = "available"
-    except (MediaFailure, StoragePressure, OSError):
+    except (ValidationError, MediaFailure, StoragePressure, OSError):
         job.status = "failed"
         job.reason = "frame_or_storage_failure"
     finally:

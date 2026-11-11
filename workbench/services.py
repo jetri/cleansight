@@ -9,6 +9,7 @@ from django.db import connection, transaction
 from django.utils import timezone
 
 from .geometry import validate_geometry
+from .media import frame_index
 from .models import (
     Camera,
     ClipJob,
@@ -289,8 +290,7 @@ def admit_media_job():
 @transaction.atomic
 def request_frame(segment, requested_us):
     source_time(requested_us)
-    if not segment.start_us <= requested_us < segment.end_us:
-        raise ValidationError("Source frame is outside segment")
+    frame_index(segment, requested_us)
     admit_media_job()
     pin(segment.artifact, "frame-inspection", 120)
     return FrameJob.objects.create(segment=segment, requested_us=requested_us)

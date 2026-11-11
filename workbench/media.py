@@ -171,14 +171,20 @@ def render_span(segments, start_us, end_us):
         manifest.unlink(missing_ok=True)
 
 
+def frame_index(segment, source_us):
+    if not segment.start_us <= source_us < segment.end_us:
+        raise ValidationError("Frame lies outside segment")
+    index = next((i for i, t in enumerate(segment.index["frame_us"]) if t >= source_us), None)
+    if index is None:
+        raise ValidationError("No indexed frame at or after requested source time")
+    return index
+
+
 def snapshot(segment, source_us):
     from .storage import verified_path
 
-    if not segment.start_us <= source_us < segment.end_us:
-        raise ValidationError("Frame lies outside segment")
+    index = frame_index(segment, source_us)
     frames = segment.index["frame_us"]
-    # Source-indexed nearest AT/AFTER requested frame, not claimed video seek accuracy.
-    index = next((i for i, t in enumerate(frames) if t >= source_us), len(frames) - 1)
     output = temp_media(".jpg")
     try:
         run_tool(

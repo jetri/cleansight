@@ -482,13 +482,16 @@ def frames(request, data, identity):
 @endpoint(["GET"])
 def frame_detail(request, data, identity):
     job = FrameJob.objects.select_related("artifact").get(pk=identity)
+    source_us = job.artifact.metadata.get("source_us") if job.artifact_id else None
+    if job.status == "available" and (source_us is None or source_us < job.requested_us):
+        raise ValidationError("No indexed frame at or after requested source time")
     return response(
         {
             "id": str(job.id),
             "status": job.status,
             "reason": job.reason,
             "media": str(job.artifact_id) if job.artifact_id else None,
-            "source_us": job.artifact.metadata.get("source_us") if job.artifact_id else None,
+            "source_us": source_us,
         }
     )
 
