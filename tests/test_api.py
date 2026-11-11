@@ -85,7 +85,10 @@ def test_active_session_identity_edit_preserves_protected_references(fixture_eve
     assert result.status_code == 200
     assert result.json()["data"]["name"] == values["name"]
     for field in ["secret_ref", "permission_ref"]:
-        assert edit({**values, "name": "Must not persist", field: "changed-reference"}).status_code == 400
+        assert (
+            edit({**values, "name": "Must not persist", field: "changed-reference"}).status_code
+            == 400
+        )
         camera.refresh_from_db()
         assert camera.name == values["name"]
         assert getattr(camera, field) == values[field]
@@ -95,7 +98,12 @@ def test_active_session_identity_edit_preserves_protected_references(fixture_eve
     session = fixture_event.run.session
     session.stopped_at = timezone.now()
     session.save(update_fields=["stopped_at"])
-    assert edit({"secret_ref": "changed-reference", "permission_ref": "changed-permission"}).status_code == 200
+    assert (
+        edit(
+            {"secret_ref": "changed-reference", "permission_ref": "changed-permission"}
+        ).status_code
+        == 200
+    )
 
 
 @pytest.mark.django_db

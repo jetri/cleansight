@@ -24,7 +24,9 @@ def test_full_clip_extension_replay_frame_and_corrupt_spans(captured):
     assert one.versions["dependencies"]["Django"] == "5.2.19"
     event = services.create_fixture(one, epoch, "synthetic-release", 20_000_000)
     newer = services.configure(camera, GEOMETRY, {"segment_seconds": 3})
-    assert services.replay(session, "observation_fixture").configuration_id == session.configuration_id
+    assert (
+        services.replay(session, "observation_fixture").configuration_id == session.configuration_id
+    )
     assert event.run.configuration_id == one.configuration_id != newer.id
     first = services.request_clip(event, 10_000_000, 53_000_000)
     assert [first.start_us, first.end_us] == [5_000_000, 65_000_000]
