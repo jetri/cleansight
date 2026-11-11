@@ -3,6 +3,7 @@
 The accepted recording contract requires gaps and separate epochs, never a
 preview or continuous coverage from a rejected segment. No camera is used.
 """
+import hashlib
 import time
 
 import pytest
@@ -11,7 +12,7 @@ from django.core.exceptions import ImproperlyConfigured
 from tests.conftest import GEOMETRY
 from workbench import capture, services
 from workbench.media import MediaFailure
-from workbench.models import Camera, CoverageGap, Segment
+from workbench.models import Artifact, Camera, CoverageGap, Segment
 from workbench.storage import StoragePressure, artifact_path
 
 
@@ -39,49 +40,73 @@ def tick_until(supervisor, condition, seconds=15):
     pytest.fail("recorder did not reach the expected state before its deadline")
 
 
-def reject_first(monkeypatch):
+def reject_first(monkeypatch, recorder):
     strict = capture.validate_video
     rejected = []
 
     def validate(path, max_seconds=360):
         if not rejected:
-            rejected.append((path, path.read_bytes()))
-            raise MediaFailure("strict_decode_failed")
+            rejected.append((path, path.read_bytes(), recorder.epoch.pk, int(path.stem)))
+            raise MediaFailure("media_tool_failed")
         return strict(path, max_seconds=max_seconds)
 
     monkeypatch.setattr(capture, "validate_video", validate)
     return rejected
 
 
+def assert_rejected_not_published(session, rejection):
+    path, raw, epoch_id, sequence = rejection
+    assert raw and path.read_bytes() == raw
+    assert not Segment.objects.filter(
+        epoch__session=session, epoch_id=epoch_id, sequence=sequence
+    ).exists()
+    digest = hashlib.sha256(raw).hexdigest()
+    assert not Segment.objects.filter(epoch__session=session, artifact__sha256=digest).exists()
+
+
 def test_rejected_input_recovers_in_fresh_epoch_without_false_continuity(recorder_supervisor, monkeypatch):
     supervisor, camera = recorder_supervisor
-    rejected = reject_first(monkeypatch)
+    supervisor.tick()
+    recorder = supervisor.recorders[str(camera.pk)]
+    child = recorder.process
+    first_epoch = recorder.epoch
+    rejected = reject_first(monkeypatch, recorder)
     tick_until(supervisor, lambda: bool(rejected))
-    bad_path, bad_bytes = rejected[0]
-    assert bad_bytes and bad_path.read_bytes() == bad_bytes
-    assert not Segment.objects.exists()
+    assert rejected[0][2] == first_epoch.pk
+    assert_rejected_not_published(recorder.session, rejected[0])
     camera.refresh_from_db()
     assert camera.desired_recording, "strict input rejection must enter bounded recovery"
-    recorder = supervisor.recorders[str(camera.pk)]
-    first_epoch = recorder.epoch
     assert CoverageGap.objects.filter(session=recorder.session, epoch=first_epoch).exists()
-    assert recorder.process is None or recorder.process.poll() is not None
+    assert child.poll() is not None
     recorder.retry_at = 0
-    tick_until(supervisor, lambda: Segment.objects.exists())
-    segment = Segment.objects.get()
-    assert segment.epoch_id != first_epoch.id
+    successors = Segment.objects.filter(epoch__session=recorder.session).exclude(epoch=first_epoch)
+    tick_until(supervisor, lambda: successors.exists())
+    segment = successors.order_by("epoch__sequence", "start_us").first()
     assert segment.epoch.sequence > first_epoch.sequence
     assert segment.start_us == 0
-    assert artifact_path(segment.artifact).read_bytes() != bad_bytes
-    tick_until(supervisor, lambda: isinstance(recorder.session.health.get("preview"), dict))
-    assert recorder.session.health["preview"].get("epoch") == str(segment.epoch_id)
+    assert artifact_path(segment.artifact).read_bytes() != rejected[0][1]
+
+    def successor_preview():
+        value = recorder.session.health.get("preview")
+        return (isinstance(value, dict) and value.get("epoch") == str(segment.epoch_id)
+                and value.get("artifact") and value.get("status") != "unavailable")
+
+    tick_until(supervisor, successor_preview)
+    value = recorder.session.health["preview"]
+    frame = Artifact.objects.get(pk=value["artifact"], status="available")
+    assert artifact_path(frame).is_file()
+    assert Segment.objects.filter(
+        epoch=segment.epoch, pk=frame.metadata["source_segment"],
+        artifact_id__in=frame.lineage,
+    ).exists()
+    assert_rejected_not_published(recorder.session, rejected[0])
 
 
 def test_desired_off_during_recovery_reaps_child(recorder_supervisor, monkeypatch):
     supervisor, camera = recorder_supervisor
-    rejected = reject_first(monkeypatch)
     supervisor.tick()
     recorder = supervisor.recorders[str(camera.pk)]
+    rejected = reject_first(monkeypatch, recorder)
     child = recorder.process
     assert recorder.session.child_identity["pid"] == child.pid
     tick_until(supervisor, lambda: bool(rejected))
@@ -93,7 +118,7 @@ def test_desired_off_during_recovery_reaps_child(recorder_supervisor, monkeypatc
     assert recorder.session.status == "stopped"
     assert child.poll() is not None
     assert str(camera.pk) not in supervisor.recorders
-    assert not Segment.objects.exists()
+    assert_rejected_not_published(recorder.session, rejected[0])
 
 
 def test_repeated_bad_input_exhausts_existing_retry_limit(recorder_supervisor, monkeypatch):
@@ -102,7 +127,7 @@ def test_repeated_bad_input_exhausts_existing_retry_limit(recorder_supervisor, m
 
     def reject(path, max_seconds=360):
         failures.append(path.read_bytes())
-        raise MediaFailure("strict_decode_failed")
+        raise MediaFailure("media_tool_failed")
 
     monkeypatch.setattr(capture, "validate_video", reject)
     supervisor.tick()
