@@ -4,13 +4,15 @@ The accepted recording contract requires gaps and separate epochs, never a
 preview or continuous coverage from a rejected segment. No camera is used.
 """
 import hashlib
+import subprocess
+import sys
 import time
 
 import pytest
 from django.core.exceptions import ImproperlyConfigured
 
 from tests.conftest import GEOMETRY
-from workbench import capture, services
+from workbench import capture, media, services
 from workbench.media import MediaFailure
 from workbench.models import Artifact, Camera, CoverageGap, Segment
 from workbench.storage import StoragePressure, artifact_path
@@ -64,7 +66,14 @@ def assert_rejected_not_published(session, rejection):
     assert not Segment.objects.filter(epoch__session=session, artifact__sha256=digest).exists()
 
 
-def test_rejected_input_recovers_in_fresh_epoch_without_false_continuity(recorder_supervisor, monkeypatch):
+def test_rejected_input_recovers_in_fresh_epoch_without_false_continuity(recorder_supervisor, monkeypatch, tmp_path):
+    successor = tmp_path / "successor.mp4"
+    subprocess.run(
+        ["ffmpeg", "-nostdin", "-v", "error", "-f", "lavfi", "-i",
+         "color=c=blue:size=320x240:rate=10", "-t", "12", "-c:v", "libx264",
+         "-preset", "ultrafast", "-g", "10", "-pix_fmt", "yuv420p", str(successor)],
+        check=True, timeout=30,
+    )
     supervisor, camera = recorder_supervisor
     supervisor.tick()
     recorder = supervisor.recorders[str(camera.pk)]
@@ -78,6 +87,10 @@ def test_rejected_input_recovers_in_fresh_epoch_without_false_continuity(recorde
     assert camera.desired_recording, "strict input rejection must enter bounded recovery"
     assert CoverageGap.objects.filter(session=recorder.session, epoch=first_epoch).exists()
     assert child.poll() is not None
+    monkeypatch.setattr(
+        capture, "input_arguments",
+        lambda _: ["-re", "-stream_loop", "-1", "-i", str(successor)],
+    )
     recorder.retry_at = 0
     successors = Segment.objects.filter(epoch__session=recorder.session).exclude(epoch=first_epoch)
     tick_until(supervisor, lambda: successors.exists())
@@ -178,6 +191,30 @@ def test_lost_lease_stops_registered_child(recorder_supervisor, monkeypatch):
     assert supervisor.error == "supervisor_unavailable_restart_required"
     assert recorder.session.status == "stopped"
     assert child.poll() is not None
+
+
+@pytest.mark.parametrize("program,limit", [
+    ("import os, signal; os.kill(os.getpid(), signal.SIGTERM)", 1024),
+    ("import sys; sys.stdout.write('x' * 2048)", 1024),
+], ids=["signaled-tool", "output-limit"])
+def test_operational_validation_tool_failure_remains_fatal(recorder_supervisor, monkeypatch, program, limit):
+    supervisor, camera = recorder_supervisor
+    attempted = []
+
+    def failing_tool(path, max_seconds=360):
+        attempted.append(True)
+        return media.run_tool([sys.executable, "-c", program], timeout=5, output_limit=limit)
+
+    monkeypatch.setattr(capture, "validate_video", failing_tool)
+    supervisor.tick()
+    recorder = supervisor.recorders[str(camera.pk)]
+    child = recorder.process
+    tick_until(supervisor, lambda: bool(attempted))
+    camera.refresh_from_db()
+    assert not camera.desired_recording, "operational tool failures must stop rather than retry"
+    assert str(camera.pk) not in supervisor.recorders
+    assert child.poll() is not None
+    assert not Segment.objects.exists()
 
 
 def test_unavailable_validation_tool_remains_fatal(recorder_supervisor, monkeypatch):
