@@ -19,16 +19,20 @@ export function previewOf(session: Session | null) {
   const value = previewSchema.safeParse(session?.health.preview);
   return value.success ? value.data : null;
 }
+function usePreviewFreshness(session: Session | null, updatedAt: number | null, disconnected: boolean) {
+  const preview = previewOf(session);
+  const now = useNow();
+  const age = preview ? preview.source_age_seconds + Math.max(0, now - (updatedAt ?? now)) / 1000 : null;
+  const stale = !!preview && (preview.stale || (age ?? 0) > 8 || updatedAt === null || disconnected || session?.stopped_at !== null || session?.health.transport !== 'connected');
+  return { preview, age, stale };
+}
 const healthText = (value: unknown) => typeof value === 'string' ? value.replaceAll('_', ' ') : 'Unavailable';
 
 export function SourcePreview({ session, updatedAt, disconnected = false }:
   { session: Session | null; updatedAt: number | null; disconnected?: boolean }) {
-  const preview = previewOf(session);
+  const { preview, age, stale } = usePreviewFreshness(session, updatedAt, disconnected);
   const [failedId, setFailedId] = useState('');
-  const now = useNow();
-  const age = preview ? preview.source_age_seconds + Math.max(0, now - (updatedAt ?? now)) / 1000 : null;
   const failed = !!preview && failedId === preview.artifact;
-  const stale = !!preview && (preview.stale || disconnected || session?.stopped_at !== null);
   return <div className="source-preview" aria-label="Latest sealed-source preview">
     {preview && !failed ? <>
       <img src={mediaUrl(preview.artifact)} alt="Unredacted latest sealed-source still, not a live video feed"
@@ -140,6 +144,7 @@ function SourceCard({ api, camera, sessions, onEdit, refreshCameras }:
   const revisions = useResource(`configurations:${camera.id}`, load, { interval: 10_000 });
   const config = revisions.data?.find(value => value.id === camera.active_revision) ?? null;
   const latest = sessions.data?.find(value => value.camera === camera.id) ?? null;
+  const { preview, stale } = usePreviewFreshness(latest, sessions.updatedAt, !!sessions.error);
   const [zoneOpen, setZoneOpen] = useState(false);
   const [pending, setPending] = useState('');
   const [message, setMessage] = useState('');
@@ -178,7 +183,7 @@ function SourceCard({ api, camera, sessions, onEdit, refreshCameras }:
       <div className="health-cell"><span>Transport</span><strong>{latest ? healthText(latest.health.transport) : 'Not started'}</strong><p>Desired recording: {camera.desired_recording ? 'ON' : 'OFF'}. This is not transport acknowledgement.</p></div>
       <div className="health-cell"><span>Recording / coverage</span><strong>{latest ? healthText(latest.health.recording) : 'No session'}</strong><p>{captured.success ? `Captured through ${sourceSeconds(captured.data.source_us)}, epoch ${shortId(captured.data.epoch)}` : 'No captured-through watermark provided.'}</p></div>
       <div className="health-cell"><span>Processing / lag</span><strong>{latest ? healthText(latest.health.processing) : 'Not implemented in M01'}</strong><p>No detector or inference watermark is implied by capture or a preview.</p></div>
-      <div className="health-cell"><span>Preview freshness</span><strong>{previewOf(latest)?.stale ? 'Stale still' : previewOf(latest) ? 'Sealed-source still' : 'Unavailable'}</strong><p>Recording-host mtime, not camera UTC. {latest?.gaps.length ?? 0} recorded coverage gap(s).</p></div>
+      <div className="health-cell"><span>Preview freshness</span><strong>{stale ? 'Stale still' : preview ? 'Sealed-source still' : 'Unavailable'}</strong><p>Recording-host mtime, not camera UTC. {latest?.gaps.length ?? 0} recorded coverage gap(s).</p></div>
     </div>
     {sessions.error && <Notice tone="error">Health refresh failed. Last received source facts may be stale. {sessions.error}</Notice>}
     <Facts items={[

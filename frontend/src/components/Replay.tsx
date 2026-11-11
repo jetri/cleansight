@@ -22,7 +22,7 @@ export function Replay({ api, cameras, sessions, runs, active }:
   const [pending, setPending] = useState(false);
   const [error, setError] = useState('');
   const [ack, setAck] = useState<Run | null>(null);
-  const [uncertain, setUncertain] = useState<{ session: string; mode: Run['mode']; existing: Set<string> } | null>(null);
+  const [uncertain, setUncertain] = useState(new Map<string, { existing: Set<string>; error: string }>());
   const lock = useRef(false);
   const summary = runs.data?.find(run => run.id === runId);
   const selectedSession = sessions.data?.find(session => session.id === sessionId);
@@ -30,8 +30,9 @@ export function Replay({ api, cameras, sessions, runs, active }:
   const sourceSessionId = summary?.session_id ?? recent?.input_manifest.session;
   const sourceSession = sessions.data?.find(session => session.id === sourceSessionId);
   const sourceCamera = cameras.data?.find(camera => camera.id === sourceSession?.camera);
-  const unresolved = uncertain?.session === sessionId && uncertain.mode === mode;
-  const discovered = uncertain ? runs.data?.filter(run => !uncertain.existing.has(run.id) && run.session_id === uncertain.session && run.mode === uncertain.mode) ?? [] : [];
+  const requestKey = `${sessionId}:${mode}`;
+  const unresolved = uncertain.get(requestKey);
+  const discovered = unresolved ? runs.data?.filter(run => !unresolved.existing.has(run.id) && run.session_id === sessionId && run.mode === mode) ?? [] : [];
   function chooseRun(id: string) {
     setRunId(id);
     const url = new URL(window.location.href); url.searchParams.set('run', id);
@@ -47,7 +48,7 @@ export function Replay({ api, cameras, sessions, runs, active }:
     } catch (failure) {
       setError(errorMessage(failure));
       if (failure instanceof ApiError && failure.uncertainWrite) {
-        setUncertain({ session: sessionId, mode, existing }); runs.refresh();
+        setUncertain(previous => new Map(previous).set(requestKey, { existing, error: errorMessage(failure) })); runs.refresh();
       }
     } finally { lock.current = false; setPending(false); }
   }
@@ -84,7 +85,7 @@ export function Replay({ api, cameras, sessions, runs, active }:
     </section>
     {runId && <div hidden={!active}><FrameInspector key={runId} api={api} run={runId} /></div>}
     <Modal open={open} title="Create local replay run" onRequestClose={() => { if (!lock.current) setOpen(false); }} actions={<>
-      <Button disabled={pending} onClick={() => setOpen(false)}>Close / retain selection</Button><Button variant="primary" disabled={pending || !sessionId || unresolved} onClick={() => { void createRun(); }}>{pending ? 'Creating…' : 'Create new run'}</Button>
+      <Button disabled={pending} onClick={() => setOpen(false)}>Close / retain selection</Button><Button variant="primary" disabled={pending || !sessionId || !!unresolved} onClick={() => { void createRun(); }}>{pending ? 'Creating…' : 'Create new run'}</Button>
     </>}>
       <div className="stack"><Notice tone="info">This stores a new run ID and pins its current source manifest and configuration. It does not start a detector, alter source timestamps or upload media.</Notice>
         <Select label="Captured source session" value={sessionId} onChange={event => setSessionId(event.target.value)} disabled={pending}><option value="">Choose a captured session</option>{sessions.data?.map(session => <option key={session.id} value={session.id}>{cameras.data?.find(camera => camera.id === session.camera)?.name ?? shortId(session.camera)} / {shortId(session.id)} / {session.provenance}</option>)}</Select>
@@ -92,7 +93,7 @@ export function Replay({ api, cameras, sessions, runs, active }:
         {selectedSession && <Facts items={[
           ['Original session', <code>{selectedSession.id}</code>], ['Session configuration', <code>{selectedSession.configuration}</code>], ['Recorded gaps', selectedSession.gaps.length],
         ]} />}
-        {error && <Notice tone="error" title={unresolved ? 'Run acknowledgement unknown / no retry sent' : 'Run not created'} live>{error}</Notice>}
+        {(unresolved || error) && <Notice tone="error" title={unresolved ? 'Run acknowledgement unknown / no retry sent' : 'Run not created'} live>{unresolved?.error ?? error}</Notice>}
         {unresolved && <><Notice tone="warning">This backend has no replay idempotency key. The same request is disabled rather than blindly duplicated. Recheck stored runs; adopting a discovered run does not claim which request created it.</Notice><Button onClick={runs.refresh}>Recheck stored runs</Button>
           {discovered.map(run => <Button key={run.id} onClick={() => { chooseRun(run.id); setOpen(false); }}>Inspect discovered run {shortId(run.id)}</Button>)}
         </>}

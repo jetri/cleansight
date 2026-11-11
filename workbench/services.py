@@ -174,7 +174,18 @@ def replay(session, mode="media_replay"):
         input_manifest={
             "session": str(session.id),
             "segments": segments,
-            "gaps": list(session.gaps.values("reason", "start_us", "end_us")),
+            "gaps": [
+                {
+                    "id": str(gap.id),
+                    "epoch_id": str(gap.epoch_id) if gap.epoch_id else None,
+                    "start_us": gap.start_us,
+                    "end_us": gap.end_us,
+                    "reason": gap.reason,
+                    "created_at": gap.created_at.isoformat(),
+                    "ended_at": gap.ended_at.isoformat() if gap.ended_at else None,
+                }
+                for gap in session.gaps.all()
+            ],
             "clock": "epoch_source_microseconds_not_wall_time",
         },
         versions={**versions(), "configuration_sha256": configuration.digest},

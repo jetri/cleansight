@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ApiError, errorMessage, mediaUrl } from '../api/client';
+import { errorMessage, mediaUrl } from '../api/client';
 import type { WorkbenchApi } from '../api/client';
 import type { Cursor, IndexedFrame } from '../api/types';
 import { shortId, sourceSeconds } from '../format';
 import { useResource } from '../hooks';
 import { ArtifactFacts } from './Media';
+import { frameKey, useFrameRequests } from './FrameRequests';
 import { Button, Empty, Facts, JsonFacts, Notice } from './ui';
 
 export function FrameInspector({ api, run, epoch }:
@@ -20,7 +21,7 @@ export function FrameInspector({ api, run, epoch }:
   const [pending, setPending] = useState(false);
   const [poll, setPoll] = useState(true);
   const [error, setError] = useState('');
-  const [unconfirmed, setUnconfirmed] = useState('');
+  const { requests, request } = useFrameRequests();
   const [failedImage, setFailedImage] = useState('');
   const [imageRevision, setImageRevision] = useState(0);
   const pendingRef = useRef(false);
@@ -29,16 +30,16 @@ export function FrameInspector({ api, run, epoch }:
   useEffect(() => {
     if (job.data && ['available', 'failed'].includes(job.data.status)) setPoll(false);
   }, [job.data]);
-  const frameKey = (frame: IndexedFrame) => `${frame.segment}:${frame.source_us}`;
+  const blocked = (frame: IndexedFrame | undefined) => !!frame && requests.has(frameKey(frame));
+  const unconfirmed = frames.some(frame => requests.get(frameKey(frame)) === 'unknown');
   async function inspect(frame: IndexedFrame) {
-    if (pendingRef.current || unconfirmed === frameKey(frame)) return;
+    if (pendingRef.current || blocked(frame)) return;
     pendingRef.current = true; setPending(true); setError(''); setSelected(frame);
     try {
-      const value = await api.requestFrame(frame.segment, frame.source_us);
-      setRequested(frame); setJobId(value.id); setPoll(true); setFailedImage('');
+      const value = await request(frame);
+      if (value) { setRequested(frame); setJobId(value.id); setPoll(true); setFailedImage(''); }
     } catch (failure) {
       setError(errorMessage(failure));
-      if (failure instanceof ApiError && failure.uncertainWrite) setUnconfirmed(frameKey(frame));
     } finally { pendingRef.current = false; setPending(false); }
   }
   const selectedIndex = selected ? frames.findIndex(frame => frameKey(frame) === frameKey(selected)) : -1;
@@ -51,19 +52,20 @@ export function FrameInspector({ api, run, epoch }:
       {timeline.loading && <Notice live>Loading the frozen run's source index…</Notice>}
       {timeline.error && <Notice tone="error">{timeline.error}</Notice>}
       <div className="cluster">
-        <Button disabled={busy || selectedIndex <= 0} onClick={() => { const frame = frames[selectedIndex - 1]; if (frame) { void inspect(frame); } }}>Previous indexed frame</Button>
-        <Button disabled={busy || !frames.length || selectedIndex >= frames.length - 1} onClick={() => { const frame = frames[selectedIndex + 1]; if (frame) { void inspect(frame); } }}>{selectedIndex < 0 ? 'Inspect first indexed frame' : 'Next indexed frame'}</Button>
+        <Button disabled={busy || selectedIndex <= 0 || blocked(frames[selectedIndex - 1])} onClick={() => { const frame = frames[selectedIndex - 1]; if (frame) { void inspect(frame); } }}>Previous indexed frame</Button>
+        <Button disabled={busy || !frames.length || selectedIndex >= frames.length - 1 || blocked(frames[selectedIndex + 1])} onClick={() => { const frame = frames[selectedIndex + 1]; if (frame) { void inspect(frame); } }}>{selectedIndex < 0 ? 'Inspect first indexed frame' : 'Next indexed frame'}</Button>
         <span className="small muted">{frames.length} frame(s) on this page{epoch ? ` / epoch ${shortId(epoch)}` : ''}</span>
       </div>
       {pending && <Notice live>Requesting a bounded frame extraction job…</Notice>}
       {jobPending && <Notice live>Frame job {job.data?.status ?? 'loading'} / {shortId(jobId)}. No image is substituted while pending.</Notice>}
-      {error && <Notice tone="error" title="Frame request not confirmed" live>{error}{unconfirmed && ' This source-frame request is not automatically retried.'}</Notice>}
+      {error && <Notice tone="error" title="Frame request not confirmed" live>{error}</Notice>}
+      {unconfirmed && <Notice tone="warning">Source-frame acknowledgement unknown. Unresolved source-frame requests remain disabled across selections; no retry is sent.</Notice>}
       {job.error && <Notice tone="error">Frame-job status is unavailable. {job.error} <Button onClick={job.refresh}>Recheck job</Button></Notice>}
       {job.data?.status === 'failed' && <Notice tone="error" title="Frame unavailable">{job.data.reason ?? 'The source decode or storage operation failed.'} No physical observation is asserted.</Notice>}
       <details className="stored-facts"><summary>Indexed frames and source PTS</summary>
         <div className="table-scroll frame-index-table"><table><thead><tr><th>Source / epoch</th><th>Original PTS</th><th>Index</th><th>Inspect</th></tr></thead><tbody>
           {frames.map(frame => <tr key={frameKey(frame)}><td><strong>{sourceSeconds(frame.source_us)}</strong><br /><code>{shortId(frame.epoch)}</code></td><td>{frame.raw_pts}<br /><span className="muted">time base {frame.time_base}</span></td><td>{frame.frame}<br /><code>{shortId(frame.segment)}</code></td>
-            <td><Button disabled={busy || unconfirmed === frameKey(frame)} onClick={() => { void inspect(frame); }} aria-label={`Inspect source ${sourceSeconds(frame.source_us)}, epoch ${shortId(frame.epoch)}`}>Inspect</Button></td></tr>)}
+            <td><Button disabled={busy || blocked(frame)} onClick={() => { void inspect(frame); }} aria-label={`Inspect source ${sourceSeconds(frame.source_us)}, epoch ${shortId(frame.epoch)}`}>Inspect</Button></td></tr>)}
         </tbody></table></div>
         {!frames.length && <Empty title="No matching indexed frames on this page">Missing or unverified source time is not replaced by estimated frames. Check unavailable spans or another page.</Empty>}
       </details>

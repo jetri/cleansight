@@ -9,7 +9,8 @@ from datetime import datetime
 
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db import DatabaseError, IntegrityError
-from django.db.models import OuterRef, Q, Subquery
+from django.db.models import OuterRef, Subquery, Value
+from django.db.models.functions import Coalesce
 from django.http import HttpResponse, JsonResponse, StreamingHttpResponse
 from django.middleware.csrf import get_token
 from django.utils import timezone
@@ -322,7 +323,7 @@ def event_queue(request, data):
     latest = Transition.objects.filter(event_id=OuterRef("pk")).order_by("-sequence")
     query = (
         FixtureEvent.objects.select_related("run")
-        .annotate(latest_state=Subquery(latest.values("state")[:1]))
+        .annotate(latest_state=Coalesce(Subquery(latest.values("state")[:1]), Value("NO_EVENT")))
         .order_by("-created_at")
     )
     if request.GET.get("camera"):
@@ -336,7 +337,7 @@ def event_queue(request, data):
     if request.GET.get("phase") == "final":
         query = query.filter(latest_state__in=services.TERMINAL)
     elif request.GET.get("phase") == "provisional":
-        query = query.filter(Q(latest_state__isnull=True) | ~Q(latest_state__in=services.TERMINAL))
+        query = query.exclude(latest_state__in=services.TERMINAL)
     elif request.GET.get("phase"):
         raise ValidationError("Phase must be provisional or final")
     return response([event_data(event) for event in query[:100]])

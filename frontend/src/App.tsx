@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import type { WorkbenchApi } from './api/client';
 import { usePreference, useResource } from './hooks';
 import { EvidenceDesk } from './components/EvidenceDesk';
+import { FrameRequests } from './components/FrameRequests';
 import { Replay } from './components/Replay';
 import { Sources } from './components/Sources';
 import { Button, Notice, Status } from './components/ui';
@@ -79,11 +80,11 @@ export function App({ api }: { api: WorkbenchApi }) {
         }}>{label}</button>)}</nav>
       {health.error && <div className="stack" style={{ marginBottom: '16px' }}><Notice tone="error" title="Local connection unavailable">{health.error} <Button onClick={() => { health.refresh(); cameras.refresh(); sessions.refresh(); runs.refresh(); }}>Refresh connection</Button></Notice></div>}
       {health.data?.supervisor && <div className="stack" style={{ marginBottom: '16px' }}><Notice tone="warning" title="Capture supervisor is not healthy">Capture acknowledgement is unavailable or degraded. Desired-state requests are not evidence of active recording; inspect each session.</Notice></div>}
-      <main id="workspace-main" tabIndex={-1}>
+      <FrameRequests api={api}><main id="workspace-main" tabIndex={-1}>
         <section id="panel-evidence" role="tabpanel" aria-labelledby="tab-evidence" hidden={view !== 'evidence'}><EvidenceDesk api={api} cameras={cameras} sessions={sessions} runs={runs} active={view === 'evidence'} onSources={() => setView('sources')} /></section>
         <section id="panel-sources" role="tabpanel" aria-labelledby="tab-sources" hidden={view !== 'sources'}><Sources api={api} cameras={cameras} sessions={sessions} /></section>
         <section id="panel-replay" role="tabpanel" aria-labelledby="tab-replay" hidden={view !== 'replay'}><Replay api={api} cameras={cameras} sessions={sessions} runs={runs} active={view === 'replay'} /></section>
-      </main>
+      </main></FrameRequests>
       <footer className="app-footer"><span>M01 / capture, replay and observation-fixture plumbing. No detector or automatic alert implementation.</span><span>Targets, not measured: 95% alert precision · 70% supported bottle/cup recall. Configurable and frozen per evaluation.</span></footer>
     </div>
   </>;

@@ -7,7 +7,7 @@ from django.utils import timezone
 
 from workbench import services
 from workbench.capture import Supervisor
-from workbench.models import Artifact, CaptureSession, ClipJob
+from workbench.models import Artifact, CaptureSession, ClipJob, CoverageGap, Epoch, ProcessingRun
 from workbench.storage import artifact_path, pin, publish
 
 from .conftest import GEOMETRY
@@ -56,6 +56,90 @@ def test_persistent_queue_and_config_api(fixture_event):
     old_revision = event.run.configuration
     services.configure(camera, GEOMETRY, {"segment_seconds": 4})
     assert event.run.configuration_id == old_revision.id
+
+
+@pytest.mark.django_db
+def test_queue_filters_use_serialized_outcome_without_transitions(fixture_event):
+    event = fixture_event
+    final = services.create_fixture(event.run, event.epoch, "final-sibling", 0)
+    services.transition(final, 1, "INCOMPLETE", 0, "synthetic_gap", {})
+    client = Client(HTTP_HOST="127.0.0.1")
+    scope = f"camera={event.run.session.camera_id}&run={event.run_id}"
+
+    def queued(filters):
+        result = client.get(f"/api/events?{scope}&{filters}")
+        assert result.status_code == 200
+        return result.json()["data"]
+
+    for filters in ["outcome=NO_EVENT", "outcome=NO_EVENT&phase=provisional", "phase=provisional"]:
+        records = queued(filters)
+        assert [record["id"] for record in records] == [str(event.id)]
+        assert records[0]["machine_outcome"] == "NO_EVENT"
+        assert records[0]["phase"] == "provisional"
+        assert records[0]["transitions"] == []
+    assert queued("outcome=NO_EVENT&phase=final") == []
+    assert [record["id"] for record in queued("phase=final")] == [str(final.id)]
+    services.transition(event, 1, "INTERACTION_CANDIDATE", 0, "synthetic_candidate", {})
+    assert queued("outcome=NO_EVENT") == []
+    assert [
+        record["id"]
+        for record in queued(
+            "outcome=INTERACTION_CANDIDATE&phase=provisional&reason=synthetic_candidate"
+        )
+    ] == [str(event.id)]
+    assert [
+        record["id"] for record in queued("outcome=INCOMPLETE&phase=final&reason=synthetic_gap")
+    ] == [str(final.id)]
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("mode", ["media_replay", "observation_fixture"])
+def test_replay_freezes_gap_identity_epoch_and_host_clocks(captured, mode):
+    _, session, epoch = captured
+    reconnect = Epoch.objects.create(
+        session=session, sequence=2, reason="synthetic_reconnect", arrival_anchor=timezone.now()
+    )
+    closed = timezone.now()
+    gaps = [
+        CoverageGap.objects.create(
+            session=session,
+            epoch=identity,
+            start_us=100_000,
+            end_us=200_000,
+            reason="synthetic_gap",
+            ended_at=closed,
+        )
+        for identity in [epoch, reconnect]
+    ]
+    gaps.append(CoverageGap.objects.create(session=session, reason="synthetic_open_outage"))
+    client = Client(HTTP_HOST="127.0.0.1")
+    result = client.post(
+        f"/api/sessions/{session.id}/replays",
+        data=json.dumps({"mode": mode}),
+        content_type="application/json",
+    )
+    assert result.status_code == 201
+    created = result.json()["data"]
+    persisted = ProcessingRun.objects.get(pk=created["id"])
+    expected = {
+        str(gap.id): {
+            "id": str(gap.id),
+            "epoch_id": str(gap.epoch_id) if gap.epoch_id else None,
+            "start_us": gap.start_us,
+            "end_us": gap.end_us,
+            "reason": gap.reason,
+            "created_at": gap.created_at.isoformat(),
+            "ended_at": gap.ended_at.isoformat() if gap.ended_at else None,
+        }
+        for gap in gaps
+    }
+    assert {gap["id"]: gap for gap in created["input_manifest"]["gaps"]} == expected
+    assert persisted.input_manifest == created["input_manifest"]
+    CoverageGap.objects.create(session=session, epoch=reconnect, reason="later_gap")
+    for cursor in ["", "?segment=1&frame=0"]:
+        readback = client.get(f"/api/runs/{persisted.id}/timeline{cursor}").json()["data"]
+        assert {gap["id"]: gap for gap in readback["gaps"]} == expected
+    assert session.gaps.count() == 4
 
 
 @pytest.mark.django_db(transaction=True)
