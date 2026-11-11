@@ -50,7 +50,7 @@ Standalone shell checks use Python 3.12+, Django 5.2.19 and pytest 9.2.0. From t
 PYTHONPATH=. python -m pytest -q frontend/tests/test_ui_shell.py
 ```
 
-The frozen backend's `pyproject.toml` is the Python/Ruff convention authority (100-column format, E/F/I/B/UP rules). In the assembled tree, run its normal Ruff checks over `workbench/ui.py`, `workbench/ui_urls.py` and `frontend/tests/test_ui_shell.py`. The standalone branch does not add a competing Python dependency/configuration project.
+The repository's [`pyproject.toml`](../pyproject.toml) owns Python/Ruff configuration. Use the [backend check commands](../docs/backend.md#verified-checks) from the repository root; they also cover the Django shell and its Python checks.
 
 ## Truth and write safety
 
@@ -58,4 +58,4 @@ Normal use always calls relative Django endpoints; there is no normal product fi
 
 Writes have explicit pending/failed/acknowledged/unknown states. A lost acknowledgement is not a definite rejection: unsafe resubmission remains disabled. Exact stored feedback/source/revision reads or explicitly discovered replay IDs can be inspected/adopted without inventing server idempotency. Drafts are local memory, not durable browser storage; closing a dialog or changing selection retains them, while leaving/reloading with an unsaved or unresolved draft warns where supported.
 
-[Progress](../docs/progress.md) records combined Django/PostgreSQL/capture/media validation separately from these source-slice checks. Required physical-camera evidence remains outstanding. No model, accuracy or production-security qualification is supplied by frontend checks.
+[Progress](../docs/progress.md) owns combined Django/PostgreSQL/capture/media and permissioned camera evidence, including limitations, separately from these source-slice checks. No model, accuracy or production-security qualification is supplied by frontend checks.

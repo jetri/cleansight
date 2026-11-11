@@ -67,8 +67,8 @@ def budget(additional=0):
 def publish(path, classification, mime, lineage=(), metadata=None, ttl_seconds=3600):
     """Validate in media module first; rename then catalog, never overwrite a prior ID.
 
-    A crash between rename/catalog leaves an orphan. Recovery quarantines it; it is
-    not silently reinterpreted as validated evidence.
+    A crash between rename/catalog leaves an orphan. Recovery leaves it private;
+    it is not silently reinterpreted as validated evidence.
     """
     path = Path(path)
     if not stat.S_ISREG(path.lstat().st_mode) or path.is_symlink():

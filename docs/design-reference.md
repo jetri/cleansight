@@ -13,7 +13,7 @@ Project [requirements](requirements.md), [architecture](architecture.md) and [mi
 - Self-contained exclusion hatches, full timestamped transition history, summary and both clock limitations before media, independent machine/phase/review/write/health/provenance and production OFF remain required. Unknown backend facts are unavailable, not inferred passes; the illustrative D2 10-second early-removal interval is not a project default.
 - No remote font, CDN, mandatory Ant Design, generic marketing route, model or second data server is introduced. The supplied export inventory below remains unchanged for provenance.
 
-Source/build, real rendered keyboard/layout/native-media journeys with explicit HTTP doubles, and standalone Django shell checks are recorded in [progress](progress.md#m01-ui-source-evidence). Combined backend/media evidence remains separate and pending. Accepted mockup appearance and synthetic browser journeys are not proof of the complete application, a camera or model accuracy.
+Source/build, real rendered keyboard/layout/native-media journeys with explicit HTTP doubles, and standalone Django shell checks are recorded in [progress](progress.md#m01-ui-source-evidence). [Progress](progress.md#m01-combined-delivery-and-real-camera-validation) owns combined application and camera evidence and its limitations. Accepted mockup appearance and synthetic browser journeys are not proof of the complete application, a camera or model accuracy.
 
 ## Inventory of the supplied snapshot
 

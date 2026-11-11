@@ -37,9 +37,11 @@ An isolated synthetic source, immutable fixture machine history, independent rev
 
 An extracted media directory with permissive mode was refused by the private-directory guard; restore instructions preserve 0700 containment rather than weaken the guard. A regression covers that failure. Runtime credentials/media/backups/proof stay outside the checkout. The documented [direct backup path](backend.md#direct-consistent-backuprestore) stops the app before backup; it is not a coordinated live snapshot, encrypted backup or production retention system.
 
-## Honest M01 acceptance matrix
+## Acceptance limits at backend preparation
 
-| Criterion | Backend evidence | Still pending for whole M01 |
+These limits describe the preparation head above, not current delivery status; see [progress](progress.md) for subsequent evidence.
+
+| Criterion | Backend evidence | Still pending at backend preparation |
 | --- | --- | --- |
 | M01-A1 | Actual backend launch/checks; loopback API/media and DB; CSRF/origin/Host denial; protected secret references; explicit unvalidated/unredacted JSON warnings | Actual UI overview/detail and warnings, accepted local frontend build/assets/user launch, integrated browser journey. Backend tests do not pass the whole criterion. |
 | M01-A2 | Two source identities and concurrent generated RTSP/file capture, independent health/staleness, stop/start/reconnect/new epochs, app/process restart durability | One permissioned physical camera/credentials and actual UI onboarding/control. A simulator cannot replace it; not run/passed. |
@@ -47,7 +49,7 @@ An extracted media directory with permissive mode was refused by the private-dir
 | M01-A4 | Encoded synthetic recording, new replay run IDs/same input/source clocks, indexed frames, playable/seekable derivative/range path, immutable machine/review and DB/media restore evidence | Actual user-operated UI playback/review and physical-camera recording/replay. FFmpeg decode is not a browser/native-player demonstration. |
 | M01-A5 | Fixture provisional/final data/history, corrupt/missing spans, controlled quota failure and retained evidence pins/expiry; no false negative or production status | Visible queue/detail/error/loading/empty/stale states and integrated UI provenance/usability checks. |
 
-No whole-M01 criterion/outcome acceptance, natural accuracy or production-security claim is made. The physical-camera prerequisite remains unsupplied; no credential request or unrelated camera probing occurred here. M02-M04 remain unauthorized. Integration with the accepted D2 UI, real-camera demonstration, broader codec/hardware/long-soak characterization and formal milestone acceptance are later explicit steps, not hidden passes.
+No whole-M01 criterion/outcome acceptance, natural accuracy or production-security claim is made. At that preparation head the physical-camera prerequisite was unsupplied; no credential request or unrelated camera probing occurred in that work. Integration, physical-camera demonstration and formal acceptance were separate next steps, not hidden passes; their subsequent disposition belongs in [progress](progress.md). Broader codec/hardware/long-soak characterization was not established.
 
 ## Delivery boundary
 

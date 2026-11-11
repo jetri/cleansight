@@ -1,8 +1,10 @@
-# Proposed architecture
+# Architecture
 
-**Current M01 implementation direction: accepted R3.** Backend source and the independently tested UI/shell source slice are locally prepared; actual combined delivery and whole-M01 acceptance are not inferred. Current authority and actual evidence live in [progress](progress.md). This consolidates the accepted direction rather than its historical alternatives. [Requirements](requirements.md) own event/evaluation semantics; [milestones](milestones.md) own acceptance and stop boundaries.
+**M01 implementation direction: accepted R3.** Current integration, authority, evidence and acceptance status live in [progress](progress.md). This consolidates the accepted direction rather than its historical alternatives. [Requirements](requirements.md) own event/evaluation semantics; [milestones](milestones.md) own acceptance and stop boundaries.
 
 ## One local application
+
+The diagram includes the deferred vision path; detector/tracker/evidence estimation is not implemented in M01. See [milestone boundaries](milestones.md) before starting that work.
 
 ```text
 Permissioned fixed RTSP camera(s)     Existing permissioned local session
@@ -44,7 +46,7 @@ Proposed Python vision baseline: a pinned small COCO-pretrained YOLO-family cand
 - One logical supervisor/store/transition owner handles durable state and child lifecycle. Do not multiply camera owners by increasing web-server workers. Capture, preview, vision and clip work are bounded children, not browser-facing services. Decode/inference/conversion must not block request handlers or long DB transactions.
 - Capture preserves every available frame in source-rate encoded rolling segments before inference. Missing packets remain explicit. Use a bounded decoded working set, not minutes of RGB frames. Short keyframe-aligned segments are proposed; actual codec/GOP/container behavior must be measured, not assumed to cut at exact requested seconds.
 - Preview independently decodes recent sealed media with source timestamp/age and a bounded refresh rate. It may skip refreshes, never source recording. Model lag must not freeze preview or make recording appear healthy.
-- Browser receives HTTP preview and validated seekable derivatives, not RTSP URLs. Proposed JPEG preview and H.264/MP4 playback need actual browser/codec testing; remux where compatible, transcode where required, retain original source and conversion provenance. Exact inspection uses source-indexed stills, not an assertion that ordinary video seeking is frame-accurate.
+- Browser receives HTTP preview and validated seekable derivatives, not RTSP URLs. JPEG preview and H.264/MP4 playback need actual browser/codec testing for each supported environment; remux where compatible, transcode where required, retain original source and conversion provenance. Exact inspection uses source-indexed stills, not an assertion that ordinary video seeking is frame-accurate.
 - Django serves only catalogued media IDs resolving to validated private paths, with tested bounded reads, MIME/range/seek behavior and no raw-directory mount. ASGI/FileResponse is not assumed to supply bounded asynchronous range serving automatically. New clip revisions prevent stale truncated caches; overlays use shared source coordinates/time.
 
 ## Durable contracts and recovery
