@@ -1,6 +1,6 @@
 # M01 combined synthetic integration evidence
 
-Validation date: **2026-11-10 UTC**. This is bounded evidence, not a second progress tracker, whole-M01 acceptance or M02 authority. [Progress](progress.md) owns approvals/current delivery. Required permissioned real-camera evidence is still absent; the [same-computer walkthrough](m01-camera-walkthrough.md) is prepared, not executed.
+Validation date: **2026-11-10 UTC**. This preserves the original synthetic integration evidence, not a second progress tracker, whole-M01 acceptance or M02 authority. [Progress](progress.md) owns approvals/current delivery. The subsequent [2026-11-11 fixed-head camera retest](m01-camera-evidence.md) records permissioned physical execution, corrected identity/replay behavior and an unresolved decode limitation; it does not rewrite the historical observations below.
 
 ## Integrated source and launch
 
@@ -43,7 +43,9 @@ npm --prefix frontend test
 
 The no-mistakes pipeline alone owns final review/test/fix/publication. These implementation checks are not a second final-review gate. No automatic PR merge is authorized.
 
-## Acceptance limits
+## Acceptance limits at the original synthetic validation
+
+These limits describe 2026-11-10, before the separately recorded [physical retest](m01-camera-evidence.md).
 
 | Criterion | Combined evidence now available | Remaining acceptance limit |
 | --- | --- | --- |
@@ -53,4 +55,4 @@ The no-mistakes pipeline alone owns final review/test/fix/publication. These imp
 | A4 | Actual encoded capture, new replay, indexed JPEG, native MP4 play/seek, review correction and app-restart readback | Real-camera recording/replay not run; original backend backup/restore evidence is preserved, not rerun here |
 | A5 | Actual fixture detail/history, partial context, expired-image unavailability, bounded reservation readback; automated storage/corruption/retention faults | Full combined browser destructive-fault walkthrough on isolated synthetic data still needed for whole-criterion acceptance; no production retention/security or soak qualification |
 
-Generated patterns and observation fixtures are never real-camera, physical-contact or accuracy evidence. No whole-M01 acceptance, M02 start, achieved 95%/70% targets or production activation is claimed. Stop for explicit outcome acceptance after the missing permissioned walkthrough, not an automatic successor milestone.
+Generated patterns and observation fixtures are never real-camera, physical-contact or accuracy evidence. No whole-M01 acceptance, M02 start, achieved 95%/70% targets or production activation is claimed. Explicit outcome acceptance must consider the subsequent physical evidence and its limitations, not automatically start a successor milestone.

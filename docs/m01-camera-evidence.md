@@ -1,0 +1,37 @@
+# M01 permissioned camera retest
+
+Validation date: **2026-11-11 UTC**. Tested source: **92a46b6c990825883f5bc53f5f9406f46121e8b2**. This records bounded execution, not human outcome acceptance, production qualification or M02 authority. [Progress](progress.md) owns current status.
+
+## Scope and result
+
+The authorized TP-Link C200 scene was exercised on the development computer through the built UI and actual Django/PostgreSQL/FFmpeg application, without API/media doubles. The existing protected reference was used; no credential discovery, network scan, camera configuration change or public listener was needed. Video, screenshots, operational identifiers and detailed logs remain private and are not included here.
+
+The final focused browser driver exited **0**. It verified the previously reported identity-edit and replay-configuration defects are fixed on this head. No additional product-code change was necessary. Earlier driver attempts are retained as failures, not counted as passing runs:
+
+- One assertion incorrectly required exact decimal equality after pointer-coordinate conversion; the observed normalized coordinate differed by less than 0.000001. The driver now uses that bounded geometric tolerance.
+- Another attempted to reuse an existing exclusion name; the editor correctly disabled saving. The driver now supplies a distinct name.
+- That second capture also stopped with the media validation failure described below. A later successful journey does not erase it.
+
+| Criterion | Current-head observations | Limits |
+| --- | --- | --- |
+| A1 | Production assets built successfully; existing DB ready and migrations current; actual UI/API/media and DB listeners loopback-only; unvalidated/unredacted/production-OFF warnings visible; saved ordinary API/app output contained no RTSP connection strings | Trusted-local MVP, not production authentication, encryption or redaction; no full secret-security certification |
+| A2 | Physical 1920x1080 H.264 15-fps capture and a separately labeled synthetic 640x360 RTSP source ran concurrently with distinct identities. The rendered identity form saved a name change while recording; both actual protected-reference changes returned 400 without partial persistence. Only the new session's registered recorder was interrupted: physical still became stale, synthetic remained near-live, and physical capture recovered with a new epoch and explicit gap. Stops were awaited before subsequent starts | Local recorder interruption, not a camera power/network outage test. An additional attempt failed closed on corrupt input; uninterrupted capture reliability is not established |
+| A3 | On the actual frozen camera image, checked 16:9 image/SVG alignment, pointer drag, arrow and Shift-arrow movement, coordinate editing, boundary buffer, named exclusion creation, save and reload. Ambiguous ground overlap and self-crossing geometry were rejected. A new immutable revision did not rewrite the recorded session | Coordinates are an editor exercise, not evidence of physical contact. Exclusion precedence and destructive geometry/fault scenarios also have separately labeled synthetic evidence |
+| A4 | UI-created media replay and API-created observation-fixture replay retained the original session configuration despite a newer active revision. New run IDs, epoch/source clocks and gap identity/timing were retained. Actual indexed 1920x1080 JPEG and derived MP4 played and sought locally. Camera/config/session/event history, one unchanged machine transition and two separate feedback records survived owned app and DB restart | Clips expose partial context and separate parts; native seeking is approximate. Fixture observations are not detector evidence. Backup/restore was not repeated |
+| A5 | Actual provisional/final fixture detail, unavailable clocks, partial context and independent human feedback were inspected in light/comfortable and dark/compact layouts. The same head's earlier targeted synthetic journeys exercised missing media, quota failure and periodic expiry with bounded reservation protection | No physical footage was deliberately expired or deleted. Synthetic faults are not camera observations or production retention qualification |
+
+The earlier current-head synthetic validation independently passed its eight focused scenarios: capture/recovery, active identity editing, delayed-refresh staleness, geometry, replay/indexed-frame contracts, fixture/media/review persistence, lost-acknowledgement guards, and periodic expiry/reservations. Those results supplement, rather than substitute for, the physical journey above. No full test suite, linter or static analyzer was run in this camera repair phase; broad remote CI remains separate and mandatory before PR readiness.
+
+## Decode failure and evidence continuity
+
+The original **b24c77e** walkthrough's name-edit and replay failures remain historical facts; its partial A3/A5 coverage is not retroactively promoted to a pass. Its unexplained early stop also remains a limitation.
+
+A current-head attempt reproduced `media_or_clock_unverified` followed by `source_or_storage_failure`. Read-only validation of its retained sealed segment through the application's actual `validate_video` failed with `media_tool_failed`; identical strict FFmpeg decoding reported **corrupt decoded frame / invalid data**, exit **183**. This establishes the immediate validation failure, not whether corruption originated in the camera, transport, recording or segmentation. No decode-through fallback, silent recovery-policy change or guarantee of continuous capture was introduced. Required missing coverage remains explicit and is never a clean negative.
+
+Before app startup, the handed-off media directory already contained no video or manual-retention archive, although historical DB records remained. This retest did not delete that earlier footage, cannot recover it, and cannot independently verify its former pixels. Existing DB history was retained; new permissioned footage supplied the current checks. The stopped DB container's obsolete source mount was repaired by recreating only its dedicated service from this checkout with the same retained volume.
+
+Across all current retest attempts, additional real-session elapsed time was **58.619307 seconds**; cumulative authorized use including the prior walkthrough was **199.117164 seconds**. Conservative cumulative media accounting, including prior reported use and new retained copies, was **108,743,092 bytes**, below the 15-minute/2-GB limits. Existing available artifacts were reserved before application startup; new footage was reserved and copied to the authorized private manual-retention directory without overwriting prior files.
+
+All desired recording states were OFF and all sessions stopped at completion. Browser, app, generated publisher, synthetic RTSP container and the dedicated DB service were stopped; their loopback listeners were absent. Generated build output was removed from the source worktree. Private footage/history remain for manual cleanup, not public delivery.
+
+**Disposition:** the previously missing fixed-head physical journey has now been executed, with its successful observations and intermittent decode failure both retained. Whole-M01 outcome acceptance remains a separate explicit human decision; no detector, accuracy target, production activation, automatic merge or successor milestone is claimed.
