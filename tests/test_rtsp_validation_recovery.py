@@ -225,6 +225,16 @@ def test_strict_validator_distinguishes_invalid_media_and_unknown_exit(tmp_path,
     with pytest.raises(MediaFailure, match="^media_invalid_input$"):
         media.validate_video(invalid)
 
+    # An absent filename is not evidence of invalid bytes, even if it echoes
+    # FFmpeg's diagnostic or includes a newline and a decoder diagnostic.
+    for name in (
+        "absent.mp4",
+        "Invalid data found when processing input",
+        "missing\ncorrupt decoded frame in stream.mp4",
+    ):
+        with pytest.raises(MediaFailure, match="^media_tool_failed$"):
+            media.validate_video(tmp_path / name)
+
     real_run_tool = media.run_tool
 
     def unknown_failure(_argv, **kwargs):
@@ -233,6 +243,16 @@ def test_strict_validator_distinguishes_invalid_media_and_unknown_exit(tmp_path,
     monkeypatch.setattr(media, "run_tool", unknown_failure)
     with pytest.raises(MediaFailure, match="^media_tool_failed$"):
         media.validate_video(synthetic)
+
+
+def test_decode_diagnostic_does_not_trust_echoed_input_path():
+    path = "missing\ncorrupt decoded frame in stream.mp4"
+    command = [sys.executable, "-c", "import sys; print(sys.argv[1], file=sys.stderr); sys.exit(1)", path]
+    with pytest.raises(MediaFailure, match="^media_tool_failed$"):
+        media.run_tool(command, invalid_input="decode", input_path=path)
+    command[2] = "import sys; print('corrupt decoded frame in stream 0', file=sys.stderr); sys.exit(1)"
+    with pytest.raises(MediaFailure, match="^media_invalid_input$"):
+        media.run_tool(command, invalid_input="decode", input_path=path)
 
 
 def test_unavailable_validation_tool_remains_fatal(recorder_supervisor, monkeypatch):

@@ -16,7 +16,7 @@ class MediaFailure(Exception):
     pass
 
 
-def run_tool(argv, timeout=20, output_limit=4 * 1024**2, invalid_input=False):
+def run_tool(argv, timeout=20, output_limit=4 * 1024**2, invalid_input=False, input_path=None):
     # Do not log credential-bearing argv or stderr. Only stable reason codes escape.
     try:
         with tempfile.TemporaryFile() as output, tempfile.TemporaryFile() as errors:
@@ -28,13 +28,20 @@ def run_tool(argv, timeout=20, output_limit=4 * 1024**2, invalid_input=False):
             if output.tell() > output_limit or errors.tell() > output_limit:
                 raise MediaFailure("media_tool_output_limit")
             if result.returncode:
-                errors.seek(0)
-                diagnostic = errors.read()
-                if invalid_input and (
-                    b"Invalid data found when processing input" in diagnostic
-                    or b"corrupt decoded frame in stream" in diagnostic
-                ):
-                    raise MediaFailure("media_invalid_input")
+                if invalid_input == "probe":
+                    output.seek(0)
+                    try:
+                        error = json.load(output).get("error", {})
+                        # FFmpeg's AVERROR_INVALIDDATA, not an echoed filename.
+                        if error.get("code") == -1094995529:
+                            raise MediaFailure("media_invalid_input")
+                    except (ValueError, AttributeError):
+                        pass
+                elif invalid_input == "decode":
+                    errors.seek(0)
+                    diagnostic = errors.read().replace(str(input_path).encode(), b"")
+                    if b"corrupt decoded frame in stream" in diagnostic:
+                        raise MediaFailure("media_invalid_input")
                 raise MediaFailure("media_tool_failed")
             output.seek(0)
             return output.read()
@@ -52,13 +59,14 @@ def probe(path, max_seconds=360):
             "v:0",
             "-read_intervals",
             "%+#21601",
+            "-show_error",
             "-show_entries",
             "stream=codec_name,width,height,avg_frame_rate,time_base:frame=pts,best_effort_timestamp_time,pkt_duration_time,duration_time",
             "-of",
             "json",
             str(path),
         ],
-        invalid_input=True,
+        invalid_input="probe",
     )
     try:
         data = json.loads(raw)
@@ -118,7 +126,8 @@ def validate_video(path, max_seconds=360):
             "-",
         ],
         timeout=30,
-        invalid_input=True,
+        invalid_input="decode",
+        input_path=path,
     )
     return index
 
