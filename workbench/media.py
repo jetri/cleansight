@@ -23,7 +23,11 @@ def run_tool(argv, timeout=20, output_limit=4 * 1024**2):
             result = subprocess.run(
                 argv, stdout=output, stderr=subprocess.DEVNULL, timeout=timeout, check=False
             )
-            if result.returncode or output.tell() > output_limit:
+            if result.returncode < 0:
+                raise MediaFailure("media_tool_signaled")
+            if output.tell() > output_limit:
+                raise MediaFailure("media_tool_output_limit")
+            if result.returncode:
                 raise MediaFailure("media_tool_failed")
             output.seek(0)
             return output.read()
