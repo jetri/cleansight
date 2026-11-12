@@ -16,18 +16,25 @@ class MediaFailure(Exception):
     pass
 
 
-def run_tool(argv, timeout=20, output_limit=4 * 1024**2):
+def run_tool(argv, timeout=20, output_limit=4 * 1024**2, invalid_input=False):
     # Do not log credential-bearing argv or stderr. Only stable reason codes escape.
     try:
-        with tempfile.TemporaryFile() as output:
+        with tempfile.TemporaryFile() as output, tempfile.TemporaryFile() as errors:
             result = subprocess.run(
-                argv, stdout=output, stderr=subprocess.DEVNULL, timeout=timeout, check=False
+                argv, stdout=output, stderr=errors, timeout=timeout, check=False
             )
             if result.returncode < 0:
                 raise MediaFailure("media_tool_signaled")
-            if output.tell() > output_limit:
+            if output.tell() > output_limit or errors.tell() > output_limit:
                 raise MediaFailure("media_tool_output_limit")
             if result.returncode:
+                errors.seek(0)
+                diagnostic = errors.read()
+                if invalid_input and (
+                    b"Invalid data found when processing input" in diagnostic
+                    or b"corrupt decoded frame in stream" in diagnostic
+                ):
+                    raise MediaFailure("media_invalid_input")
                 raise MediaFailure("media_tool_failed")
             output.seek(0)
             return output.read()
@@ -50,7 +57,8 @@ def probe(path, max_seconds=360):
             "-of",
             "json",
             str(path),
-        ]
+        ],
+        invalid_input=True,
     )
     try:
         data = json.loads(raw)
@@ -110,6 +118,7 @@ def validate_video(path, max_seconds=360):
             "-",
         ],
         timeout=30,
+        invalid_input=True,
     )
     return index
 

@@ -49,7 +49,7 @@ def reject_first(monkeypatch, recorder):
     def validate(path, max_seconds=360):
         if not rejected:
             rejected.append((path, path.read_bytes(), recorder.epoch.pk, int(path.stem)))
-            raise MediaFailure("media_tool_failed")
+            raise MediaFailure("media_invalid_input")
         return strict(path, max_seconds=max_seconds)
 
     monkeypatch.setattr(capture, "validate_video", validate)
@@ -140,7 +140,7 @@ def test_repeated_bad_input_exhausts_existing_retry_limit(recorder_supervisor, m
 
     def reject(path, max_seconds=360):
         failures.append(path.read_bytes())
-        raise MediaFailure("media_tool_failed")
+        raise MediaFailure("media_invalid_input")
 
     monkeypatch.setattr(capture, "validate_video", reject)
     supervisor.tick()
@@ -196,7 +196,8 @@ def test_lost_lease_stops_registered_child(recorder_supervisor, monkeypatch):
 @pytest.mark.parametrize("program,limit", [
     ("import os, signal; os.kill(os.getpid(), signal.SIGTERM)", 1024),
     ("import sys; sys.stdout.write('x' * 2048)", 1024),
-], ids=["signaled-tool", "output-limit"])
+    ("import sys; sys.exit(7)", 1024),
+], ids=["signaled-tool", "output-limit", "unknown-positive-exit"])
 def test_operational_validation_tool_failure_remains_fatal(recorder_supervisor, monkeypatch, program, limit):
     supervisor, camera = recorder_supervisor
     attempted = []
@@ -215,6 +216,23 @@ def test_operational_validation_tool_failure_remains_fatal(recorder_supervisor, 
     assert str(camera.pk) not in supervisor.recorders
     assert child.poll() is not None
     assert not Segment.objects.exists()
+
+
+def test_strict_validator_distinguishes_invalid_media_and_unknown_exit(tmp_path, synthetic, monkeypatch):
+    assert media.validate_video(synthetic)["frame_us"]
+    invalid = tmp_path / "invalid.mp4"
+    invalid.write_bytes(b"synthetic invalid video")
+    with pytest.raises(MediaFailure, match="^media_invalid_input$"):
+        media.validate_video(invalid)
+
+    real_run_tool = media.run_tool
+
+    def unknown_failure(_argv, **kwargs):
+        return real_run_tool([sys.executable, "-c", "import sys; sys.exit(7)"], **kwargs)
+
+    monkeypatch.setattr(media, "run_tool", unknown_failure)
+    with pytest.raises(MediaFailure, match="^media_tool_failed$"):
+        media.validate_video(synthetic)
 
 
 def test_unavailable_validation_tool_remains_fatal(recorder_supervisor, monkeypatch):
