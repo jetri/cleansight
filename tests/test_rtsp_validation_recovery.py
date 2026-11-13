@@ -250,7 +250,11 @@ def test_decode_diagnostic_does_not_trust_echoed_input_path():
     command = [sys.executable, "-c", "import sys; print(sys.argv[1], file=sys.stderr); sys.exit(1)", path]
     with pytest.raises(MediaFailure, match="^media_tool_failed$"):
         media.run_tool(command, invalid_input="decode", input_path=path)
-    command[2] = "import sys; print('corrupt decoded frame in stream 0', file=sys.stderr); sys.exit(1)"
+    command[2] = (
+        "import sys; print('[vist#0:0/h264 @ 0xabc] [dec:h264 @ 0xdef] "
+        "Task finished with error code: -1094995529 "
+        "(Invalid data found when processing input)', file=sys.stderr); sys.exit(1)"
+    )
     with pytest.raises(MediaFailure, match="^media_invalid_input$"):
         media.run_tool(command, invalid_input="decode", input_path=path)
 

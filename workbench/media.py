@@ -1,6 +1,7 @@
 """Bounded ordinary FFmpeg jobs, never a second browser-facing service."""
 
 import json
+import re
 import subprocess
 import tempfile
 from fractions import Fraction
@@ -40,7 +41,16 @@ def run_tool(argv, timeout=20, output_limit=4 * 1024**2, invalid_input=False, in
                 elif invalid_input == "decode":
                     errors.seek(0)
                     diagnostic = errors.read().replace(str(input_path).encode(), b"")
-                    if b"corrupt decoded frame in stream" in diagnostic:
+                    # Only FFmpeg's input or decoder task may identify invalid data.
+                    # An echoed input filename or an unrelated tool message is not evidence.
+                    if re.search(
+                        rb"(?m)^\[(?:in#\d+/[^\]\r\n @]+ @ 0x[0-9a-f]+|"
+                        rb"vist#\d+:\d+/[^\]\r\n @]+ @ 0x[0-9a-f]+\] "
+                        rb"\[dec:[^\]\r\n @]+ @ 0x[0-9a-f]+)\] "
+                        rb"Task finished with error code: -1094995529 "
+                        rb"\(Invalid data found when processing input\)\r?$",
+                        diagnostic,
+                    ):
                         raise MediaFailure("media_invalid_input")
                 raise MediaFailure("media_tool_failed")
             output.seek(0)
