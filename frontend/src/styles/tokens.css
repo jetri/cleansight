@@ -88,10 +88,10 @@
   /* Inverse evidence chrome deliberately remains stable across UI themes. */
 }
 :root[data-density="compact"] {
-  --workspace-inset: 20px;
-  --panel-inset: 16px;
-  --layout-gap: 16px;
-  --stack-gap: 12px;
-  --table-inset: 10px;
+  --workspace-inset: 16px;
+  --panel-inset: 12px;
+  --layout-gap: 12px;
+  --stack-gap: 8px;
+  --table-inset: 8px;
   /* Compact reduces whitespace, never important text or 44px hit targets. */
 }

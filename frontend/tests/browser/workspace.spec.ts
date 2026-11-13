@@ -1,6 +1,51 @@
 import { expect, test } from '@playwright/test';
 import { installMockHttp } from './fixture';
 
+test('m01-h06-controls native selection and distinct density spacing', async ({ page }, info) => {
+  const state = await installMockHttp(page, info.outputPath('synthetic-media'));
+  await page.goto('/ui-assets/');
+  const density = page.getByLabel('Density', { exact: true });
+  const measure = () => page.evaluate(() => {
+    const select = document.querySelector<HTMLSelectElement>('select[aria-label="Density"]')!;
+    const style = getComputedStyle(select);
+    return {
+      paddingRight: parseFloat(style.paddingRight),
+      borderRight: parseFloat(style.borderRightWidth),
+      appearance: style.appearance,
+      height: select.getBoundingClientRect().height,
+      panel: parseFloat(getComputedStyle(document.querySelector('[aria-label="Separate human feedback"]')!).paddingTop),
+      workspace: parseFloat(getComputedStyle(document.querySelector('.workspace')!).paddingLeft),
+      overflow: document.documentElement.scrollWidth - innerWidth,
+    };
+  });
+  await density.selectOption('comfortable');
+  await expect(page.getByRole('region', { name: 'Separate human feedback' })).toBeVisible();
+  const comfortable = await measure();
+  expect(comfortable.paddingRight).toBeGreaterThanOrEqual(24);
+  expect(comfortable.borderRight).toBeGreaterThanOrEqual(10);
+  expect(comfortable.appearance).toBe('auto');
+  await density.focus();
+  await expect(density).toBeFocused();
+  await page.keyboard.type('compact');
+  await expect(density).toHaveValue('compact');
+  await expect(page.locator('html')).toHaveAttribute('data-density', 'compact');
+  await expect(density).toBeFocused();
+  const compact = await measure();
+  expect(comfortable.panel - compact.panel).toBeGreaterThanOrEqual(8);
+  expect(comfortable.workspace - compact.workspace).toBeGreaterThanOrEqual(8);
+  for (const result of [comfortable, compact]) {
+    expect(result.height).toBeGreaterThanOrEqual(44);
+    expect(result.overflow).toBe(0);
+  }
+  await page.screenshot({ path: info.outputPath('compact-controls.png') });
+  await page.keyboard.press('Tab');
+  await expect(density).not.toBeFocused();
+  await density.selectOption('comfortable');
+  await expect(density).toHaveValue('comfortable');
+  await page.screenshot({ path: info.outputPath('comfortable-controls.png') });
+  expect(state.unhandled).toEqual([]);
+});
+
 // These are real Chromium/DOM/codec journeys with an HTTP test double.
 // They do not claim Django, PostgreSQL, capture, integrity or persisted-DB E2E.
 test('HTTP-mocked workspace renders native synthetic video under self-only CSP', async ({ page, browser }, info) => {
