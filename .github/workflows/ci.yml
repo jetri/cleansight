@@ -24,11 +24,9 @@ jobs:
       run:
         shell: bash
     env:
-      LITTERING_RUNTIME: ${{ runner.temp }}/cleansight-ci
       LITTERING_DB_PORT: '55432'
       LITTERING_DB_NAME: littering
       LITTERING_RTSP_TEST: '0'
-      UI_TEST_OUTPUT: ${{ runner.temp }}/cleansight-browser-results
       COMPOSE_PROJECT_NAME: cleansight-ci
       PYTHONDONTWRITEBYTECODE: '1'
 
@@ -79,7 +77,10 @@ jobs:
           printf '%s\n' "$prefix/bin" >> "$GITHUB_PATH"
 
       - name: Prepare only the disposable CI database and runtime
+        env:
+          LITTERING_RUNTIME: ${{ runner.temp }}/cleansight-ci
         run: |
+          printf 'LITTERING_RUNTIME=%s\n' "$LITTERING_RUNTIME" >> "$GITHUB_ENV"
           python -m litterwatch.init_runtime "$LITTERING_RUNTIME"
           docker compose up -d --wait --wait-timeout 90 db
           docker compose exec -T db psql -U littering_admin -d postgres --set ON_ERROR_STOP=1 -c 'CREATE DATABASE test_littering OWNER littering_app'
@@ -111,6 +112,8 @@ jobs:
 
       - name: Browser checks against synthetic HTTP doubles
         working-directory: frontend
+        env:
+          UI_TEST_OUTPUT: ${{ runner.temp }}/cleansight-browser-results
         run: npm run test:browser
 
       - name: Clean up only disposable CI services
