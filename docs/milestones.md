@@ -1,6 +1,6 @@
 # Milestones and acceptance stops
 
-Scope revision: **R3 consolidated documentation**, preserving the established M01-M04 user-visible criteria. M01 implementation, including the later parallel UI slice, is separately authorized; whole-M01 acceptance and all M02-M04 starts remain unapproved. Current execution/approval evidence belongs only in [progress](progress.md), not another status table here or in README. [Requirements](requirements.md) define evidence/accuracy semantics; [architecture](architecture.md) records accepted R3 direction and [design integration](design-reference.md) records accepted D2 provenance.
+Scope revision: **R3 consolidated documentation**, preserving the established M01-M04 user-visible criteria. M01 implementation, including the later parallel UI slice, was separately authorized. Current execution and outcome-acceptance evidence belongs only in [progress](progress.md), not another status table here or in README. All M02-M04 starts remain unapproved; M01 acceptance does not authorize a successor. [Requirements](requirements.md) define evidence/accuracy semantics; [architecture](architecture.md) records accepted R3 direction and [design integration](design-reference.md) records accepted D2 provenance.
 
 The functional local MVP ends at **M02**. Accuracy qualification is a separate, uncertain **M04** outcome. Neither implies production-secure deployment. No elapsed-time estimate, guaranteed accuracy, sample-count shortcut or hardware throughput is promised.
 
