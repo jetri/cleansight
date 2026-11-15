@@ -3,6 +3,7 @@
 The accepted recording contract requires gaps and separate epochs, never a
 preview or continuous coverage from a rejected segment. No camera is used.
 """
+
 import hashlib
 import subprocess
 import sys
@@ -24,7 +25,9 @@ def recorder_supervisor(transactional_db, synthetic, monkeypatch):
     services.configure(camera, GEOMETRY, {})
     Camera.objects.filter(pk=camera.pk).update(desired_recording=True)
     # Feed the real recorder a generated, looping encoded file instead of a camera.
-    monkeypatch.setattr(capture, "input_arguments", lambda _: ["-re", "-stream_loop", "-1", "-i", str(synthetic)])
+    monkeypatch.setattr(
+        capture, "input_arguments", lambda _: ["-re", "-stream_loop", "-1", "-i", str(synthetic)]
+    )
     supervisor = capture.Supervisor()
     try:
         yield supervisor, camera
@@ -66,13 +69,34 @@ def assert_rejected_not_published(session, rejection):
     assert not Segment.objects.filter(epoch__session=session, artifact__sha256=digest).exists()
 
 
-def test_rejected_input_recovers_in_fresh_epoch_without_false_continuity(recorder_supervisor, monkeypatch, tmp_path):
+def test_rejected_input_recovers_in_fresh_epoch_without_false_continuity(
+    recorder_supervisor, monkeypatch, tmp_path
+):
     successor = tmp_path / "successor.mp4"
     subprocess.run(
-        ["ffmpeg", "-nostdin", "-v", "error", "-f", "lavfi", "-i",
-         "color=c=blue:size=320x240:rate=10", "-t", "12", "-c:v", "libx264",
-         "-preset", "ultrafast", "-g", "10", "-pix_fmt", "yuv420p", str(successor)],
-        check=True, timeout=30,
+        [
+            "ffmpeg",
+            "-nostdin",
+            "-v",
+            "error",
+            "-f",
+            "lavfi",
+            "-i",
+            "color=c=blue:size=320x240:rate=10",
+            "-t",
+            "12",
+            "-c:v",
+            "libx264",
+            "-preset",
+            "ultrafast",
+            "-g",
+            "10",
+            "-pix_fmt",
+            "yuv420p",
+            str(successor),
+        ],
+        check=True,
+        timeout=30,
     )
     supervisor, camera = recorder_supervisor
     supervisor.tick()
@@ -88,7 +112,8 @@ def test_rejected_input_recovers_in_fresh_epoch_without_false_continuity(recorde
     assert CoverageGap.objects.filter(session=recorder.session, epoch=first_epoch).exists()
     assert child.poll() is not None
     monkeypatch.setattr(
-        capture, "input_arguments",
+        capture,
+        "input_arguments",
         lambda _: ["-re", "-stream_loop", "-1", "-i", str(successor)],
     )
     recorder.retry_at = 0
@@ -101,15 +126,20 @@ def test_rejected_input_recovers_in_fresh_epoch_without_false_continuity(recorde
 
     def successor_preview():
         value = recorder.session.health.get("preview")
-        return (isinstance(value, dict) and value.get("epoch") == str(segment.epoch_id)
-                and value.get("artifact") and value.get("status") != "unavailable")
+        return (
+            isinstance(value, dict)
+            and value.get("epoch") == str(segment.epoch_id)
+            and value.get("artifact")
+            and value.get("status") != "unavailable"
+        )
 
     tick_until(supervisor, successor_preview)
     value = recorder.session.health["preview"]
     frame = Artifact.objects.get(pk=value["artifact"], status="available")
     assert artifact_path(frame).is_file()
     assert Segment.objects.filter(
-        epoch=segment.epoch, pk=frame.metadata["source_segment"],
+        epoch=segment.epoch,
+        pk=frame.metadata["source_segment"],
         artifact_id__in=frame.lineage,
     ).exists()
     assert_rejected_not_published(recorder.session, rejected[0])
@@ -146,7 +176,7 @@ def test_repeated_bad_input_exhausts_existing_retry_limit(recorder_supervisor, m
     supervisor.tick()
     recorder = supervisor.recorders[str(camera.pk)]
     for attempt in range(1, 6):
-        tick_until(supervisor, lambda: len(failures) >= attempt)
+        tick_until(supervisor, lambda attempt=attempt: len(failures) >= attempt)
         camera.refresh_from_db()
         if attempt < 5:
             assert camera.desired_recording
@@ -159,7 +189,15 @@ def test_repeated_bad_input_exhausts_existing_retry_limit(recorder_supervisor, m
     assert CoverageGap.objects.filter(session=recorder.session).exists()
 
 
-@pytest.mark.parametrize("failure", [StoragePressure("full"), ImproperlyConfigured("invalid"), OSError("tool unavailable"), PermissionError("credential unavailable")])
+@pytest.mark.parametrize(
+    "failure",
+    [
+        StoragePressure("full"),
+        ImproperlyConfigured("invalid"),
+        OSError("tool unavailable"),
+        PermissionError("credential unavailable"),
+    ],
+)
 def test_non_input_launch_failures_remain_fatal(recorder_supervisor, monkeypatch, failure):
     supervisor, camera = recorder_supervisor
 
@@ -193,12 +231,18 @@ def test_lost_lease_stops_registered_child(recorder_supervisor, monkeypatch):
     assert child.poll() is not None
 
 
-@pytest.mark.parametrize("program,limit", [
-    ("import os, signal; os.kill(os.getpid(), signal.SIGTERM)", 1024),
-    ("import sys; sys.stdout.write('x' * 2048)", 1024),
-    ("import sys; sys.exit(7)", 1024),
-], ids=["signaled-tool", "output-limit", "unknown-positive-exit"])
-def test_operational_validation_tool_failure_remains_fatal(recorder_supervisor, monkeypatch, program, limit):
+@pytest.mark.parametrize(
+    "program,limit",
+    [
+        ("import os, signal; os.kill(os.getpid(), signal.SIGTERM)", 1024),
+        ("import sys; sys.stdout.write('x' * 2048)", 1024),
+        ("import sys; sys.exit(7)", 1024),
+    ],
+    ids=["signaled-tool", "output-limit", "unknown-positive-exit"],
+)
+def test_operational_validation_tool_failure_remains_fatal(
+    recorder_supervisor, monkeypatch, program, limit
+):
     supervisor, camera = recorder_supervisor
     attempted = []
 
@@ -218,7 +262,9 @@ def test_operational_validation_tool_failure_remains_fatal(recorder_supervisor, 
     assert not Segment.objects.exists()
 
 
-def test_strict_validator_distinguishes_invalid_media_and_unknown_exit(tmp_path, synthetic, monkeypatch):
+def test_strict_validator_distinguishes_invalid_media_and_unknown_exit(
+    tmp_path, synthetic, monkeypatch
+):
     assert media.validate_video(synthetic)["frame_us"]
     invalid = tmp_path / "invalid.mp4"
     invalid.write_bytes(b"synthetic invalid video")
@@ -247,7 +293,12 @@ def test_strict_validator_distinguishes_invalid_media_and_unknown_exit(tmp_path,
 
 def test_decode_diagnostic_does_not_trust_echoed_input_path():
     path = "missing\ncorrupt decoded frame in stream.mp4"
-    command = [sys.executable, "-c", "import sys; print(sys.argv[1], file=sys.stderr); sys.exit(1)", path]
+    command = [
+        sys.executable,
+        "-c",
+        "import sys; print(sys.argv[1], file=sys.stderr); sys.exit(1)",
+        path,
+    ]
     with pytest.raises(MediaFailure, match="^media_tool_failed$"):
         media.run_tool(command, invalid_input="decode", input_path=path)
     command[2] = (

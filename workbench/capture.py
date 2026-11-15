@@ -211,7 +211,10 @@ class Recorder:
                 try:
                     index = validate_video(path, max_seconds=60)
                 except MediaFailure as exc:
-                    if str(exc) in {"media_invalid_input", "media_index_invalid_or_segment_too_long"}:
+                    if str(exc) in {
+                        "media_invalid_input",
+                        "media_index_invalid_or_segment_too_long",
+                    }:
                         raise InvalidInput("media_or_clock_unverified") from exc
                     raise
                 raw_start, raw_end = index["start_us"], index["end_us"]
