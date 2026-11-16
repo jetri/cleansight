@@ -1,6 +1,6 @@
 # Evidence Desk frontend
 
-React/TypeScript workspace for the authorized M01 slice. The accepted D2 [token authority](src/styles/tokens.css) and domain anatomy are described in [design provenance](../docs/design-reference.md). [Project progress](../docs/progress.md) separates actual evidence from milestone acceptance.
+React/TypeScript workspace for the authorized M01 slice. The accepted D2 [token authority](src/styles/tokens.css) and domain anatomy are described in [design provenance](../docs/design-reference.md). The [historical record](../docs/progress-history.md) separates actual evidence from milestone acceptance.
 
 ## Build
 
@@ -58,4 +58,4 @@ Normal use always calls relative Django endpoints; there is no normal product fi
 
 Writes have explicit pending/failed/acknowledged/unknown states. A lost acknowledgement is not a definite rejection: unsafe resubmission remains disabled. Exact stored feedback/source/revision reads or explicitly discovered replay IDs can be inspected/adopted without inventing server idempotency. Drafts are local memory, not durable browser storage; closing a dialog or changing selection retains them, while leaving/reloading with an unsaved or unresolved draft warns where supported.
 
-[Progress](../docs/progress.md) owns combined Django/PostgreSQL/capture/media and permissioned camera evidence, including limitations, separately from these source-slice checks. No model, accuracy or production-security qualification is supplied by frontend checks.
+The [historical record](../docs/progress-history.md) preserves combined Django/PostgreSQL/capture/media and permissioned camera evidence, including limitations, separately from these source-slice checks. No model, accuracy or production-security qualification is supplied by frontend checks.

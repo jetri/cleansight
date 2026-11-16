@@ -1,6 +1,6 @@
 # M01 backend: setup, API and local recovery
 
-This documents the M01 backend integrated with the Evidence Desk UI, not a classifier or accepted M01 outcome. [Progress](progress.md) owns current authority and evidence; [backend preparation evidence](m01-backend-evidence.md) preserves the earlier backend-only checks and their limits. No M02 implementation is included.
+This documents the M01 backend integrated with the Evidence Desk UI, not a classifier or accepted M01 outcome. The [historical record](progress-history.md) preserves authority and evidence; [backend preparation evidence](m01-backend-evidence.md) preserves the earlier backend-only checks and their limits. No M02 implementation is included.
 
 ## Prerequisites and isolated setup
 
