@@ -82,7 +82,11 @@ jobs:
         run: |
           printf 'LITTERING_RUNTIME=%s\n' "$LITTERING_RUNTIME" >> "$GITHUB_ENV"
           python -m litterwatch.init_runtime "$LITTERING_RUNTIME"
-          docker compose up -d --wait --wait-timeout 90 db
+          docker compose up -d --wait --wait-timeout 90 db || {
+            startup_status=$?
+            docker compose logs --no-color db || true
+            exit "$startup_status"
+          }
           docker compose exec -T db psql -U littering_admin -d postgres --set ON_ERROR_STOP=1 -c 'CREATE DATABASE test_littering OWNER littering_app'
 
       - name: Python lint and format
