@@ -1,6 +1,6 @@
-# Proposed milestones and acceptance stops
+# Milestones and acceptance stops
 
-Scope revision: **R3 consolidated documentation**, preserving the established M01-M04 user-visible criteria. All implementation scopes remain proposed, not approved to start. Current execution/approval evidence belongs only in [progress](progress.md), not another status table here or in README. [Requirements](requirements.md) define evidence/accuracy semantics; [architecture](architecture.md) is an unaccepted implementation recommendation; [design integration](design-reference.md) remains pending.
+Scope revision: **R3 consolidated documentation**, preserving the established M01-M04 user-visible criteria. M01 implementation, including the later parallel UI slice, was separately authorized. Current execution and outcome-acceptance evidence belongs only in [progress](progress.md), not another status table here or in README. All M02-M04 starts remain unapproved; M01 acceptance does not authorize a successor. [Requirements](requirements.md) define evidence/accuracy semantics; [architecture](architecture.md) records accepted R3 direction and [design integration](design-reference.md) records accepted D2 provenance.
 
 The functional local MVP ends at **M02**. Accuracy qualification is a separate, uncertain **M04** outcome. Neither implies production-secure deployment. No elapsed-time estimate, guaranteed accuracy, sample-count shortcut or hardware throughput is promised.
 
@@ -28,7 +28,7 @@ Use simple linked acceptance notes as work actually occurs, not dashboards, perc
 
 | Criterion | Acceptance evidence required |
 | --- | --- |
-| M01-A1 | With documented steps, start on the actual development computer, open camera overview/detail and verify UI/API/media listeners are loopback-only. Show unredacted/unvalidated warnings. No secret values in ordinary saved config/logs/errors/exports. R3 launch evidence must document the proposed Node/Vite local build/assets and Django serving path, plus DB readiness/migrations; none is verified yet. |
+| M01-A1 | With documented steps, start on the actual development computer, open camera overview/detail and verify UI/API/media listeners are loopback-only. Show unredacted/unvalidated warnings. No secret values in ordinary saved config/logs/errors/exports. R3 launch evidence must document the Node/Vite local build/assets and Django serving path, plus actual DB readiness/migrations. Partial frontend/backend checks are not the combined criterion; record actual evidence in progress. |
 | M01-A2 | UI add/edit/connect/start/stop/reconnect for one real camera and concurrent second RTSP source; independent IDs/state persist through restart. Label simulated/replayed second source in UI/evidence. Disconnect/reconnect changes health/staleness and records affected coverage; stale imagery never says live. |
 | M01-A3 | Draw/save/reload littering and exclusion/bin polygons plus boundary buffers over actual imagery. Reject invalid geometry/ambiguous overlaps; exclusions win. Save new immutable revisions without rewriting history. |
 | M01-A4 | Record permissioned input, replay the saved session through the shared application path with a new run ID/source timestamps, and play/seek locally. Restart preserves sessions, camera/zone config, fixture events and separately stored reviews. |
@@ -36,7 +36,7 @@ Use simple linked acceptance notes as work actually occurs, not dashboards, perc
 
 **Demonstration:** actual-computer walkthrough of onboarding, two-source state, zones, capture/clip/replay, review/restart and disconnect/reconnect. Include legible loading/empty/error/stale screenshots, keyboard/focus/layout evidence, exact environment/source settings/session lengths and A1-A5 test outcomes. Background refresh/save failures must preserve playback, drafts and notes. Fixtures prove plumbing only.
 
-**Inputs/limits:** permissioned scene/credentials through protected runtime storage, camera transport/codec, disk/browser compatibility. A simulator cannot replace the required real-camera demo. Under proposed R3 verify actual Docker containment/readiness, protected DB credential, durable volume/restart and build/assets; no install/container start is authorized by this plan. GPU discovery is informational, not a workbench prerequisite. Missing inputs are reported, never fabricated as passes.
+**Inputs/limits:** permissioned scene/credentials through protected runtime storage, camera transport/codec, disk/browser compatibility. A simulator cannot replace the required real-camera demo. Under accepted R3 verify actual Docker containment/readiness, protected DB credentials, durable volume/restart and build/assets. M01 start is separately authorized; this specification alone does not authorize work beyond that scope. GPU discovery is informational, not a workbench prerequisite. Missing inputs are reported, never fabricated as passes.
 
 **Stop:** present A1-A5 for explicit outcome acceptance. Do not integrate the real detector or start M02 without separate approval.
 

@@ -1,0 +1,29 @@
+# DB only. Use a unique --project-name for each isolated checkout/test instance.
+services:
+  db:
+    image: postgres:17@sha256:ff87138949ad9a46f32ff23bd6852b52ce024a13dffe9b4087be98292cdd3b4f
+    environment:
+      POSTGRES_USER: littering_admin
+      POSTGRES_DB: littering
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_admin
+    ports:
+      - "127.0.0.1:${LITTERING_DB_PORT:-55432}:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+      - ./ops/init-db.sql:/docker-entrypoint-initdb.d/10-app.sql:ro
+    secrets:
+      - db_admin
+      - db_app
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U littering_admin -d littering"]
+      interval: 2s
+      timeout: 3s
+      retries: 20
+    restart: "no"
+secrets:
+  db_admin:
+    file: ${LITTERING_RUNTIME:?Set a private absolute runtime directory}/secrets/db_admin
+  db_app:
+    file: ${LITTERING_RUNTIME:?Set a private absolute runtime directory}/secrets/db_app
+volumes:
+  db_data:

@@ -1,0 +1,22 @@
+[project]
+name = "littering-workbench"
+version = "0.1.0"
+requires-python = ">=3.12,<3.15"
+description = "Local, unvalidated M01 evidence backend with integrated UI. No detector."
+dependencies = ["Django==5.2.19", "psycopg[binary]==3.3.8", "uvicorn==0.49.0", "shapely==2.1.2"]
+
+[project.optional-dependencies]
+test = ["pytest==9.2.0", "pytest-django==4.14.0", "ruff==0.15.22"]
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "litterwatch.settings"
+testpaths = ["tests"]
+addopts = "-ra"
+
+[tool.ruff]
+line-length = 100
+extend-exclude = ["*/migrations/*.py"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+ignore = ["E501"]

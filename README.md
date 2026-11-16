@@ -1,12 +1,12 @@
 # Littering detection
 
-A proposed local, evidence-first workbench for inspecting observable unretrieved object releases from fixed cameras. It does not infer intent, identity or a legal violation.
+An experimental local, evidence-first workbench for inspecting observable unretrieved object releases from fixed cameras. It does not infer intent, identity or a legal violation.
 
 ## Current status
 
-**Planning/design only. No application exists yet.** No camera, recording, model or accuracy run has been performed for this repository. Implementation, technical-plan acceptance and UI/design-system acceptance are not recorded. Documentation preparation does not authorize M01.
+The M01 workbench combines a Django backend with the Evidence Desk D2 UI. No detector or accuracy qualification is claimed.
 
-See the single [progress record](docs/progress.md) for approval, execution, evidence and next actions, including the completed documentation landing and authority migration. Documentation-ready is not documentation-landed.
+See the single [progress record](docs/progress.md) for approval, execution, synthetic and permissioned camera evidence, limitations and next actions. Evidence does not itself establish whole-M01 outcome acceptance.
 
 ## Scope
 
@@ -19,14 +19,16 @@ See the single [progress record](docs/progress.md) for approval, execution, evid
 ## Documentation
 
 - [Requirements, event model and evaluation](docs/requirements.md): authoritative observable evidence, timing, coverage and accuracy semantics.
-- [Proposed architecture](docs/architecture.md): current R3 recommendation and deferred security seams.
-- [Design-reference contract](docs/design-reference.md): supplied export inventory, provenance and pending integration review.
-- [Milestones and approval stops](docs/milestones.md): proposed M01-M04 scopes and acceptance criteria.
+- [Architecture](docs/architecture.md): accepted R3 implementation direction and deferred security seams.
+- [Design-reference contract](docs/design-reference.md): accepted D2 provenance, project token authority and original export inventory.
+- [Milestones and approval stops](docs/milestones.md): M01-M04 scopes and acceptance criteria.
 
 ## Getting started and verification
 
-Not available: no application exists yet, so there are no verified application launch, build, lint or test commands. Django + React/TypeScript/Vite and Docker/PostgreSQL are **proposed, not installed or accepted**. Runtime versions, compatibility and licenses remain to be checked during approved implementation. Verified commands belong here only after that work exists and has been exercised.
+Django serves the React/TypeScript workspace, Vite-built local assets, API and private catalogued media from **one loopback origin**. Node is a build tool, not a second data server. Follow [backend setup, launch, API and private recovery](docs/backend.md) and [frontend build instructions](frontend/README.md). Build the frontend before starting `python -m litterwatch`, then open `http://127.0.0.1:8000/`.
 
-Use only permissioned inputs. Keep footage and credentials out of version control, ordinary configuration, logs, errors and exports; configuration contains protected runtime secret references only. The eventual MVP must visibly warn **local development / unvalidated / unredacted footage**. Local safeguards are not delivered production security.
+Verification commands and prerequisites live in the [frontend checks](frontend/README.md#checks) and [backend checks](docs/backend.md#verified-checks). The [progress record](docs/progress.md) distinguishes source-slice checks from combined application and physical-camera evidence. Built `frontend/dist/` is generated and not committed.
+
+Use only permissioned inputs. Keep footage and credentials out of version control, ordinary configuration, logs, errors and exports; configuration contains protected runtime secret references only. The workbench visibly warns **local development / unvalidated / unredacted footage**. Local safeguards are not delivered production security.
 
 Each implementation milestone needs explicit start approval, evidence against its identified criteria, explicit outcome acceptance, then separate successor authorization. Neither these documents nor design delivery supplies that approval.

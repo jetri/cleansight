@@ -1,0 +1,9 @@
+# Camera-free canonical checks. Hosted CI adds isolated synthetic backend
+# and HTTP-double browser coverage; this is not live camera acceptance.
+commands:
+  test: npm --prefix frontend test
+  lint: |
+    python -m ruff check .
+    python -m ruff format --check .
+    npm --prefix frontend run lint
+    npm --prefix frontend run typecheck

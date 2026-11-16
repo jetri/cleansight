@@ -1,0 +1,134 @@
+# Started from `no-mistakes ci-workflow`; project toolchain setup is maintained here.
+# Only generated files/synthetic HTTP fixtures are exercised. The existing opt-in
+# Docker RTSP walkthrough is not enabled; this is not physical-camera acceptance.
+name: CI
+
+on:
+  push:
+    branches: ['main']
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-test:
+    name: Pinned checks (synthetic only)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    defaults:
+      run:
+        shell: bash
+    env:
+      LITTERING_DB_PORT: '55432'
+      LITTERING_DB_NAME: littering
+      LITTERING_RTSP_TEST: '0'
+      COMPOSE_PROJECT_NAME: cleansight-ci
+      COMPOSE_FILE: 'compose.yaml:.github/compose.ci.yml'
+      PYTHONDONTWRITEBYTECODE: '1'
+
+    steps:
+      - name: Check out source without persisted credentials
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+
+      - name: Set up Python 3.12.8
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: '3.12.8'
+          cache: pip
+          cache-dependency-path: requirements.lock
+
+      - name: Set up Node 26.13.0
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '26.13.0'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install locked project dependencies
+        run: |
+          python -m pip install --disable-pip-version-check -r requirements.lock
+          npm --prefix frontend ci --ignore-scripts --no-fund
+
+      - name: Build pinned FFmpeg 8.0 for file-only fixtures
+        env:
+          FFMPEG_SHA256: b2751fccb6cc4c77708113cd78b561059b6fa904b24162fa0be2d60273d27b8e
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y build-essential pkg-config nasm libx264-dev
+          build="$RUNNER_TEMP/ffmpeg-build"
+          prefix="$RUNNER_TEMP/ffmpeg-8.0"
+          mkdir -p "$build"
+          curl --fail --location --max-time 180 https://ffmpeg.org/releases/ffmpeg-8.0.tar.xz --output "$build/source.tar.xz"
+          printf '%s  %s\n' "$FFMPEG_SHA256" "$build/source.tar.xz" | sha256sum --check --strict
+          tar -xJf "$build/source.tar.xz" -C "$build"
+          ( cd "$build/ffmpeg-8.0"
+            ./configure --prefix="$prefix" --disable-doc --disable-debug --disable-ffplay --disable-network --enable-gpl --enable-libx264 > "$build/configure.log" 2>&1 || { tail -n 80 "$build/configure.log"; exit 1; }
+            make -j2 > "$build/make.log" 2>&1 || { tail -n 80 "$build/make.log"; exit 1; }
+            make install > "$build/install.log" 2>&1 || { tail -n 80 "$build/install.log"; exit 1; }
+          )
+          "$prefix/bin/ffmpeg" -version
+          "$prefix/bin/ffprobe" -version
+          printf '%s\n' "$prefix/bin" >> "$GITHUB_PATH"
+
+      - name: Prepare only the disposable CI database and runtime
+        id: database
+        env:
+          LITTERING_RUNTIME: ${{ runner.temp }}/cleansight-ci
+          CI_DB_APP_SECRET: ${{ runner.temp }}/cleansight-ci-postgres/db_app
+        run: |
+          printf 'LITTERING_RUNTIME=%s\nCI_DB_APP_SECRET=%s\n' "$LITTERING_RUNTIME" "$CI_DB_APP_SECRET" >> "$GITHUB_ENV"
+          python -m litterwatch.init_runtime "$LITTERING_RUNTIME"
+          install -d -m 0700 "$(dirname "$CI_DB_APP_SECRET")"
+          cp "$LITTERING_RUNTIME/secrets/db_app" "$CI_DB_APP_SECRET"
+          postgres_owner="$(docker compose run --rm --no-deps -T --entrypoint sh db -c 'printf "%s:%s" "$(id -u postgres)" "$(id -g postgres)"')"
+          [[ "$postgres_owner" =~ ^[0-9]+:[0-9]+$ ]]
+          sudo chown -- "$postgres_owner" "$CI_DB_APP_SECRET"
+          sudo chmod 0400 "$CI_DB_APP_SECRET"
+          docker compose up -d --wait --wait-timeout 90 db || {
+            startup_status=$?
+            docker compose logs --no-color db || true
+            exit "$startup_status"
+          }
+          docker compose exec -T db psql -U littering_admin -d postgres --set ON_ERROR_STOP=1 -c 'CREATE DATABASE test_littering OWNER littering_app'
+
+      - name: Python lint and format
+        run: |
+          python -m ruff check .
+          python -m ruff format --check .
+
+      - name: Frontend lint and typecheck
+        run: |
+          npm --prefix frontend run lint
+          npm --prefix frontend run typecheck
+
+      - name: Frontend unit tests and production assets
+        run: |
+          npm --prefix frontend test
+          npm --prefix frontend run build
+
+      - name: Django consistency and safe generated-file tests
+        run: |
+          python manage.py check
+          python manage.py makemigrations --check --dry-run
+          python -m pytest --reuse-db tests frontend/tests/test_ui_shell.py
+
+      - name: Install the lock-pinned Chromium build
+        working-directory: frontend
+        run: ./node_modules/.bin/playwright install --with-deps chromium
+
+      - name: Browser checks against synthetic HTTP doubles
+        working-directory: frontend
+        env:
+          UI_TEST_OUTPUT: ${{ runner.temp }}/cleansight-browser-results
+        run: npm run test:browser
+
+      - name: Clean up only disposable CI services
+        if: ${{ always() && steps.database.outcome != 'skipped' }}
+        run: docker compose down --volumes --remove-orphans

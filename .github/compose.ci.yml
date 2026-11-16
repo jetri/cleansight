@@ -1,0 +1,5 @@
+# Linux CI bind mounts preserve host ownership. PostgreSQL receives a separate
+# owner-readable copy; the app's private runtime credential stays unchanged.
+secrets:
+  db_app:
+    file: ${CI_DB_APP_SECRET:?Set the disposable CI PostgreSQL secret copy}

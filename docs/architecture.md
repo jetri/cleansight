@@ -1,8 +1,10 @@
-# Proposed architecture
+# Architecture
 
-**Current recommendation: R3, unaccepted and uninstalled.** No application, dependency environment, database, container, model or media pipeline exists. This consolidates the latest technical proposal rather than its historical alternatives. [Requirements](requirements.md) own event/evaluation semantics; [milestones](milestones.md) own acceptance and stop boundaries.
+**M01 implementation direction: accepted R3.** Current integration, authority, evidence and acceptance status live in [progress](progress.md). This consolidates the accepted direction rather than its historical alternatives. [Requirements](requirements.md) own event/evaluation semantics; [milestones](milestones.md) own acceptance and stop boundaries.
 
 ## One local application
+
+The diagram includes the deferred vision path; detector/tracker/evidence estimation is not implemented in M01. See [milestone boundaries](milestones.md) before starting that work.
 
 ```text
 Permissioned fixed RTSP camera(s)     Existing permissioned local session
@@ -35,7 +37,7 @@ Vite/Node build -> local asset bundle/manifest -> Django shell
 Replay/evaluation reuses source, observation and evidence contracts
 ```
 
-Django/ORM on ASGI/Uvicorn is the proposed browser-facing authority. React owns one bounded workspace mounted in a Django shell; Vite builds local assets. Shell, assets, JSON and media share one loopback origin. Node is build/development tooling, not a separate data server. No separate FastAPI, React SSR/Next.js, public CDN, Redis/Celery, Kubernetes, model-service fleet or generic provider/control framework is proposed. FastAPI/SQLite and vanilla-JS-only recommendations are superseded. **TACO is removed from active dependencies, data work and experiments.**
+Django/ORM on ASGI/Uvicorn is the browser-facing authority for the authorized M01 slice. React owns one bounded workspace mounted in a Django shell; Vite builds local assets. Shell, assets, JSON and media share one loopback origin. Node is build/development tooling, not a separate data server. No separate FastAPI, React SSR/Next.js, public CDN, Redis/Celery, Kubernetes, model-service fleet or generic provider/control framework is proposed. FastAPI/SQLite and vanilla-JS-only recommendations are superseded. **TACO is removed from active dependencies, data work and experiments.**
 
 Proposed Python vision baseline: a pinned small COCO-pretrained YOLO-family candidate with explicitly selected ByteTrack **without appearance ReID**, plus a separately versioned event-local possession/contact/release/landing/retrieval estimator and pure evidence reducer. COCO class availability is not camera support. Boxes, keypoints, overlap, optical flow and retained tracker predictions cannot manufacture physical contact evidence. A bounded targeted ROI/contact refinement may be compared only within approved feasibility scope; no open-ended model survey, training or VLM track is implied. Licenses for exact code, weights, binaries and transitive dependencies must be checked before adoption; none is cleared by this plan.
 
@@ -44,7 +46,7 @@ Proposed Python vision baseline: a pinned small COCO-pretrained YOLO-family cand
 - One logical supervisor/store/transition owner handles durable state and child lifecycle. Do not multiply camera owners by increasing web-server workers. Capture, preview, vision and clip work are bounded children, not browser-facing services. Decode/inference/conversion must not block request handlers or long DB transactions.
 - Capture preserves every available frame in source-rate encoded rolling segments before inference. Missing packets remain explicit. Use a bounded decoded working set, not minutes of RGB frames. Short keyframe-aligned segments are proposed; actual codec/GOP/container behavior must be measured, not assumed to cut at exact requested seconds.
 - Preview independently decodes recent sealed media with source timestamp/age and a bounded refresh rate. It may skip refreshes, never source recording. Model lag must not freeze preview or make recording appear healthy.
-- Browser receives HTTP preview and validated seekable derivatives, not RTSP URLs. Proposed JPEG preview and H.264/MP4 playback need actual browser/codec testing; remux where compatible, transcode where required, retain original source and conversion provenance. Exact inspection uses source-indexed stills, not an assertion that ordinary video seeking is frame-accurate.
+- Browser receives HTTP preview and validated seekable derivatives, not RTSP URLs. JPEG preview and H.264/MP4 playback need actual browser/codec testing for each supported environment; remux where compatible, transcode where required, retain original source and conversion provenance. Exact inspection uses source-indexed stills, not an assertion that ordinary video seeking is frame-accurate.
 - Django serves only catalogued media IDs resolving to validated private paths, with tested bounded reads, MIME/range/seek behavior and no raw-directory mount. ASGI/FileResponse is not assumed to supply bounded asynchronous range serving automatically. New clip revisions prevent stale truncated caches; overlays use shared source coordinates/time.
 
 ## Durable contracts and recovery
@@ -67,7 +69,7 @@ Pin the full zone-set/configuration at strong release, including before landing-
 
 ## Local database, capacity and containment
 
-Propose a version-pinned PostgreSQL container with a named durable volume and protected DB credentials, a non-superuser application account, Django migrations and actual readiness checks. App/media/vision stay on the host initially; Compose is proposed for the DB only. Docker availability is user-reported, not tested. No container is started by this documentation.
+M01 uses a version-pinned PostgreSQL container with a named durable volume and protected DB credentials, a non-superuser application account, Django migrations and actual readiness checks. App/media stay on the host initially; Compose is for the DB only. The separate backend slice exercised PostgreSQL persistence/recovery; final combined UI/application evidence remains separate in [progress](progress.md). No container is started by this document and no model runtime is authorized by M01.
 
 If a DB port is published, bind explicitly to loopback and verify actual reachability/engine behavior, including known older-engine localhost-publishing limitations. A named volume is not a backup. Persistence acceptance requires real PostgreSQL transaction/restart/recreation/lost-connection and independent backup/restore evidence with matching media manifests; SQLite tests cannot establish PostgreSQL parity. Never silently initialize empty history as successful recovery or casually delete a volume.
 
@@ -92,8 +94,8 @@ These are proposed architectural seams, **not delivered controls**. The MVP trus
 
 Future enforcement attaches to domain operations, controlled media, classified storage and provenance. It requires real schema/data migration, encryption/redaction backfill, audit cutover, backup/retention and concurrency testing, not a free framework toggle. No generic policy engine, provider layer or service fleet is justified now.
 
-## Planned verification, not executed commands
+## Verification scope
 
-Proposed tooling is pytest for pure reducer/geometry/contracts and real PostgreSQL/media integration; Playwright Python for actual local user workflows; frontend type/build checks and an independent frozen evaluator. None is installed or run here; no command recipe is verified.
+The UI uses pinned TypeScript/Vite/ESLint/Vitest and Playwright for real Chromium journeys against explicitly mocked HTTP resources, plus standalone real-Django shell/asset checks. [Frontend build/assembly/check instructions](../frontend/README.md) and [actual evidence/limits](progress.md#m01-ui-source-evidence) distinguish those checks from combined Django/PostgreSQL/capture/media verification. Pytest owns backend/domain/integration checks; a frozen accuracy evaluator and real detector remain later scope, not delivered M01 tooling.
 
 Verify deterministic timing/geometry/denominator fixtures, shared live/replay paths, local RTSP/browser E2E, failed writes/restarts/secret leakage/CSRF/media-path faults, one/two-stream soak and careful wide/compact keyboard/visual review. Django ordinary test clients relax CSRF, so negative tests must explicitly enforce checks. Preserve a failing user-flow replay before a bug fix. Fixtures establish logic, staged real observations establish feasibility, natural held-out evaluation establishes per-scope accuracy. See [milestone evidence gates](milestones.md).

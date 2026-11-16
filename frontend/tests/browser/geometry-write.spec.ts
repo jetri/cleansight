@@ -1,0 +1,63 @@
+import { expect, test } from '@playwright/test';
+import { installMockHttp } from './fixture';
+
+// Product browser interaction with a deliberate mocked commit/lost-response fault.
+test('geometry reconciles an active stored revision without duplicating or erasing newer edits', async ({ page }, info) => {
+  const state = await installMockHttp(page, info.outputPath('synthetic-media'));
+  state.loseGeometryAcknowledgement = true;
+  await page.goto('/ui-assets/');
+  await page.getByRole('tab', { name: 'Sources & zones' }).click();
+  await page.getByRole('button', { name: 'Zones & exclusions', exact: true }).click();
+  const dialog = page.getByRole('dialog', { name: /Zones & exclusions/ });
+  await dialog.getByLabel('Polygon name', { exact: true }).fill('Ground submitted / synthetic UI test');
+  await dialog.getByLabel('I checked this draft against the source reference and camera position.', { exact: true }).check();
+  await dialog.getByRole('button', { name: 'Save & assign new revision', exact: true }).click();
+  await expect(dialog.getByText(/acknowledgement was not received/)).toBeVisible();
+  expect(state.configurations).toHaveLength(2);
+  await expect(dialog.getByText('Revision acknowledgement unknown / no blind retry', { exact: true })).toBeVisible();
+  await expect(dialog.getByRole('button', { name: 'Save & assign new revision', exact: true })).toBeDisabled();
+  await dialog.getByLabel('Polygon name', { exact: true }).fill('Ground newer / retain after read adoption');
+  await dialog.getByRole('button', { name: 'Recheck active stored revision', exact: true }).click();
+  await dialog.getByRole('button', { name: /Use matching active revision/ }).click();
+  await expect(dialog.getByLabel('Polygon name', { exact: true })).toHaveValue('Ground newer / retain after read adoption');
+  await expect(dialog.getByText(/newer edits remain unsaved/)).toBeVisible();
+  expect(state.calls.filter(call => call.path.endsWith('/configurations') && call.method === 'POST')).toHaveLength(1);
+  await page.screenshot({ path: info.outputPath('geometry-read-adopted-newer-draft.png') });
+  expect(state.unhandled).toEqual([]);
+});
+
+test('definite geometry rejection retains the draft, explicit retry saves, and reload uses the stored revision', async ({ page }, info) => {
+  const state = await installMockHttp(page, info.outputPath('synthetic-media'));
+  state.failGeometryOnce = true;
+  await page.goto('/ui-assets/');
+  await page.getByRole('tab', { name: 'Sources & zones', exact: true }).click();
+  const trigger = page.getByRole('button', { name: 'Zones & exclusions', exact: true });
+  await trigger.click();
+  const dialog = page.getByRole('dialog', { name: /Zones & exclusions/ });
+  const name = dialog.getByLabel('Polygon name', { exact: true });
+  await name.fill('Stable ground / retained server rejection');
+  await dialog.getByLabel('I checked this draft against the source reference and camera position.', { exact: true }).check();
+  const save = dialog.getByRole('button', { name: 'Save & assign new revision', exact: true });
+  await save.click();
+  await expect(dialog.getByText(/Injected server overlap rejection/)).toBeVisible();
+  await expect(name).toHaveValue('Stable ground / retained server rejection');
+  expect(state.configurations).toHaveLength(1);
+  await save.click();
+  await expect(dialog.getByText(/was saved and assigned by the server/)).toBeVisible();
+  await expect(dialog.getByText('No unsaved geometry change', { exact: true })).toBeVisible();
+  expect(state.configurations).toHaveLength(2);
+  expect(state.configurations[1]!.sequence).toBeGreaterThan(state.configurations[0]!.sequence);
+  await page.keyboard.press('Escape');
+  await page.reload();
+  await page.getByLabel('Theme', { exact: true }).selectOption('dark');
+  await trigger.click();
+  await expect(name).toHaveValue('Stable ground / retained server rejection');
+  const hatch = dialog.locator('.zone-stage defs pattern path');
+  await expect(hatch).toHaveCount(2);
+  await expect(hatch.nth(0)).toHaveAttribute('stroke', 'var(--evidence-bg)');
+  await expect(hatch.nth(1)).toHaveAttribute('stroke', 'var(--evidence-text)');
+  expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBe(0);
+  await page.screenshot({ path: info.outputPath('geometry-dark-stored-revision-hatch.png') });
+  expect(state.calls.filter(call => call.path.endsWith('/configurations') && call.method === 'POST')).toHaveLength(2);
+  expect(state.unhandled).toEqual([]);
+});
