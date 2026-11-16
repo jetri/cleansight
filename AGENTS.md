@@ -1,0 +1,8 @@
+# Project instructions
+
+- Use [requirements](docs/requirements.md) for event/evaluation semantics, [architecture](docs/architecture.md) for the implemented local stack and future direction, [design reference](docs/design-reference.md) for design adoption, and [milestones](docs/milestones.md) for scope and acceptance. [Progress](docs/progress.md) records actual authority, execution, evidence and limitations.
+- Follow the milestone approval and acceptance boundaries in [milestones](docs/milestones.md); documentation or design delivery is not implementation approval, and acceptance does not authorize a successor.
+- Source time drives event logic. Preserve evidence-gated transitions, inclusive deadlines, revision pinning and timestamped history. Ambiguous evidence abstains; missing required coverage is incomplete, never negative.
+- Keep fixture/model/data provenance, frozen machine outcomes, human review and production qualification/activation independent. Fixtures and staged successes are not natural-camera accuracy evidence; where independent footage establishes a supported visible positive, abstentions remain recall misses.
+- Keep the MVP local-only with permissioned inputs and protected runtime secrets. Never commit footage/credentials or expose them in ordinary config/logs/exports. No biometrics, enforcement, external actions or hosted footage processing. Local safeguards are not production security.
+- Find development, build and test instructions through [README](README.md). Use the accepted project token authority in [design reference](docs/design-reference.md); do not infer installed dependencies, product behavior or production security from proposals or export previews.
