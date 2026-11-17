@@ -2,11 +2,11 @@
 
 This is a historical snapshot, not a current tracker. See [progress](progress.md) for current status and [milestone details](milestone-details.md) for the preserved acceptance contract.
 
-Record reconciled: **2026-11-16 UTC**. **M01 R3 A1-A5 was explicitly accepted with disclosed evidence limits and its delivery merged into main.** The original no-mistakes run failed at Push, not a clean pipeline pass; separately authorized direct completion and remote CI preceded the merge. This is the **project-local progress authority**. The six-file documentation package landed on local `main` at `d9715a53a96bad36c87cb4cc23418caec5f9b48f` after explicit user merge approval. The former private overview is now pointer-only, not a second maintained tracker.
+Record reconciled: **2026-11-16 UTC**. **M01 R3 A1-A5 was explicitly accepted with disclosed evidence limits and its delivery merged into main.** The original no-mistakes run failed at Push, not a clean pipeline pass; separately authorized direct completion and remote CI preceded the merge. Current status is in the [progress tracker](progress.md). The six-file documentation package landed on local `main` at `d9715a53a96bad36c87cb4cc23418caec5f9b48f` after explicit user merge approval. The former private overview is now pointer-only, not a second maintained tracker.
 
 This record separates independent authorization, execution, evidence and acceptance. Milestone definitions live in [milestone details](milestone-details.md); README and any future project instructions must link here rather than duplicate mutable status.
 
-## Current record
+## Record as of 2026-11-16
 
 | Work | Approval / acceptance | Actual execution | Evidence / limits | Next action |
 | --- | --- | --- | --- | --- |
@@ -21,7 +21,7 @@ This record separates independent authorization, execution, evidence and accepta
 | M03 | Start approval absent; acceptance absent | Not started | [M03 scope/criteria](milestone-details.md#m03---accuracy-development-and-frozen-evaluation-readiness); no natural dataset/evaluator/frozen protocol | Accepted M02 and separate M03 approval |
 | M04 | Start approval absent; acceptance absent | Not started | [M04 scope/criteria](milestone-details.md#m04---per-camerazone-qualification-and-local-gated-operation); no qualified/activated scope | Accepted M03 and separate M04 approval |
 
-The original documentation authorization alone did not accept plans/UI or start milestones. The later, separate approvals below establish current M01 authority. The separate M01 outcome acceptance is recorded below; no project instruction installation, completion percentage or automatic successor approval is implied.
+The original documentation authorization alone did not accept plans/UI or start milestones. The later, separate approvals below establish M01 authority. The separate M01 outcome acceptance is recorded below; no project instruction installation, completion percentage or automatic successor approval is implied.
 
 ## Subsequent M01 and UI authority
 
@@ -96,4 +96,4 @@ These entries are a consolidated historical evidence summary, not newly obtained
 
 ## Update rule after landing
 
-At real transitions only, record milestone/scope revision, explicit start-approval reference, actual execution state, criterion-level evidence link (including failed/missing work), independent outcome-acceptance reference and responsible next action. Add detailed acceptance notes only when real evidence exists. Preserve original machine/evaluation evidence and limitations; tests or a nice UI do not manufacture approval. The record must not advance from accepted predecessor to executing successor without separately explicit start authority.
+At real transitions, update [progress](progress.md) and record milestone/scope revision, explicit start-approval reference, actual execution state, criterion-level evidence link (including failed/missing work), independent outcome-acceptance reference and responsible next action in linked records. Add detailed acceptance notes only when real evidence exists. Preserve original machine/evaluation evidence and limitations; tests or a nice UI do not manufacture approval. The record must not advance from accepted predecessor to executing successor without separately explicit start authority.
