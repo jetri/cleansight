@@ -6,7 +6,7 @@ An experimental local, evidence-first workbench for inspecting observable unretr
 
 The M01 workbench combines a Django backend with the Evidence Desk D2 UI. No detector or accuracy qualification is claimed.
 
-See the single [progress record](docs/progress.md) for approval, execution, synthetic and permissioned camera evidence, limitations and next actions. Evidence does not itself establish whole-M01 outcome acceptance.
+See the [progress tracker](docs/progress.md) for milestone and deliverable status, and the linked [historical record](docs/progress-history.md) for approvals, evidence and limits.
 
 ## Scope
 
@@ -21,13 +21,13 @@ See the single [progress record](docs/progress.md) for approval, execution, synt
 - [Requirements, event model and evaluation](docs/requirements.md): authoritative observable evidence, timing, coverage and accuracy semantics.
 - [Architecture](docs/architecture.md): accepted R3 implementation direction and deferred security seams.
 - [Design-reference contract](docs/design-reference.md): accepted D2 provenance, project token authority and original export inventory.
-- [Milestones and approval stops](docs/milestones.md): M01-M04 scopes and acceptance criteria.
+- [Milestones](docs/milestones.md): M01-M04 outcomes and links to detailed scope and approval stops.
 
 ## Getting started and verification
 
 Django serves the React/TypeScript workspace, Vite-built local assets, API and private catalogued media from **one loopback origin**. Node is a build tool, not a second data server. Follow [backend setup, launch, API and private recovery](docs/backend.md) and [frontend build instructions](frontend/README.md). Build the frontend before starting `python -m litterwatch`, then open `http://127.0.0.1:8000/`.
 
-Verification commands and prerequisites live in the [frontend checks](frontend/README.md#checks) and [backend checks](docs/backend.md#verified-checks). The [progress record](docs/progress.md) distinguishes source-slice checks from combined application and physical-camera evidence. Built `frontend/dist/` is generated and not committed.
+Verification commands and prerequisites live in the [frontend checks](frontend/README.md#checks) and [backend checks](docs/backend.md#verified-checks). The [historical record](docs/progress-history.md) distinguishes source-slice checks from combined application and physical-camera evidence. Built `frontend/dist/` is generated and not committed.
 
 Use only permissioned inputs. Keep footage and credentials out of version control, ordinary configuration, logs, errors and exports; configuration contains protected runtime secret references only. The workbench visibly warns **local development / unvalidated / unredacted footage**. Local safeguards are not delivered production security.
 

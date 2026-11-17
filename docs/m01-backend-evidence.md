@@ -1,6 +1,6 @@
 # M01 backend evidence (2026-11-10)
 
-This preserves the independent backend preparation evidence at `74d1a625170b2a49c6487d75705cf47edc28f2e5`, not a second tracker or whole-M01 acceptance. Later combined validation is in [integration evidence](m01-integration-evidence.md). [Progress](progress.md) records authority and current delivery; [milestones](milestones.md) retain unchanged M01-A1 through A5. The user authorized M01, initially backend-first, and later authorized a separately owned parallel UI implementation. That preparation slice contained no UI/design-system code, detector, tracker, model download, GPU work, natural footage or accuracy evaluator.
+This preserves the independent backend preparation evidence at `74d1a625170b2a49c6487d75705cf47edc28f2e5`, not a second tracker or whole-M01 acceptance. Later combined validation is in [integration evidence](m01-integration-evidence.md). The [historical record](progress-history.md) preserves authority and delivery evidence; [milestone details](milestone-details.md#m01---inspectable-local-camera-workbench) retain unchanged M01-A1 through A5. The user authorized M01, initially backend-first, and later authorized a separately owned parallel UI implementation. That preparation slice contained no UI/design-system code, detector, tracker, model download, GPU work, natural footage or accuracy evaluator.
 
 ## Implemented backend slice
 
@@ -39,7 +39,7 @@ An extracted media directory with permissive mode was refused by the private-dir
 
 ## Acceptance limits at backend preparation
 
-These limits describe the preparation head above, not current delivery status; see [progress](progress.md) for subsequent evidence.
+These limits describe the preparation head above, not current delivery status; see the [historical record](progress-history.md) for subsequent evidence.
 
 | Criterion | Backend evidence | Still pending at backend preparation |
 | --- | --- | --- |
@@ -49,7 +49,7 @@ These limits describe the preparation head above, not current delivery status; s
 | M01-A4 | Encoded synthetic recording, new replay run IDs/same input/source clocks, indexed frames, playable/seekable derivative/range path, immutable machine/review and DB/media restore evidence | Actual user-operated UI playback/review and physical-camera recording/replay. FFmpeg decode is not a browser/native-player demonstration. |
 | M01-A5 | Fixture provisional/final data/history, corrupt/missing spans, controlled quota failure and retained evidence pins/expiry; no false negative or production status | Visible queue/detail/error/loading/empty/stale states and integrated UI provenance/usability checks. |
 
-No whole-M01 criterion/outcome acceptance, natural accuracy or production-security claim is made. At that preparation head the physical-camera prerequisite was unsupplied; no credential request or unrelated camera probing occurred in that work. Integration, physical-camera demonstration and formal acceptance were separate next steps, not hidden passes; their subsequent disposition belongs in [progress](progress.md). Broader codec/hardware/long-soak characterization was not established.
+No whole-M01 criterion/outcome acceptance, natural accuracy or production-security claim is made. At that preparation head the physical-camera prerequisite was unsupplied; no credential request or unrelated camera probing occurred in that work. Integration, physical-camera demonstration and formal acceptance were separate next steps, not hidden passes; their subsequent disposition is in the [historical record](progress-history.md). Broader codec/hardware/long-soak characterization was not established.
 
 ## Delivery boundary
 

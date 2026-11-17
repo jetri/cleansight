@@ -1,6 +1,6 @@
 # M01 combined synthetic integration evidence
 
-Validation date: **2026-11-10 UTC**. This preserves the original synthetic integration evidence, not a second progress tracker, whole-M01 acceptance or M02 authority. [Progress](progress.md) owns approvals/current delivery. The subsequent [2026-11-11 fixed-head camera retest](m01-camera-evidence.md) records permissioned physical execution, corrected identity/replay behavior and an unresolved decode limitation; it does not rewrite the historical observations below.
+Validation date: **2026-11-10 UTC**. This preserves the original synthetic integration evidence, not a second progress tracker, whole-M01 acceptance or M02 authority. The [historical record](progress-history.md) preserves approvals and delivery evidence. The subsequent [2026-11-11 fixed-head camera retest](m01-camera-evidence.md) records permissioned physical execution, corrected identity/replay behavior and an unresolved decode limitation; it does not rewrite the historical observations below.
 
 ## Integrated source and launch
 
@@ -30,7 +30,7 @@ Console inspection retained the intentional expired-media 410, strict-CSP eval r
 - Production Vite build/typecheck and ESLint passed; **32/32** Vitest tests passed. npm audit found zero vulnerabilities; pip dependency consistency passed. Built output is ignored, not committed.
 - The inherited Chromium suite passed **13/13 in 25.5s** in the combined checkout. It deliberately uses HTTP doubles and synthetic native-codec fixtures, so it remains distinct from the actual Django/browser journey above.
 - Combined Python run: **58 passed in 70.76s** = 43 existing backend checks, 14 shell checks and one new assembled URL/middleware regression. `LITTERING_RTSP_TEST=1` exercised real sockets, two synthetic RTSP sources, disconnect/new epoch/gap, registered-child crash recovery, lost-lease health and private media/storage faults. The earlier integration run passed 57/57 before adding the health/seam regression.
-- Django system check, migration consistency and Ruff lint/format passed. Independent source preparation evidence remains [backend-scoped](m01-backend-evidence.md) and [UI-scoped](progress.md#m01-ui-source-evidence); neither is retroactively combined acceptance.
+- Django system check, migration consistency and Ruff lint/format passed. Independent source preparation evidence remains [backend-scoped](m01-backend-evidence.md) and [UI-scoped](progress-history.md#m01-ui-source-evidence); neither is retroactively combined acceptance.
 
 Reproduce with a new isolated runtime/project using [backend setup](backend.md) and [frontend build](../frontend/README.md), provision its separate test database, then run:
 

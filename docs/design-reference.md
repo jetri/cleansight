@@ -2,7 +2,7 @@
 
 ## Status and authority
 
-The **corrected Evidence Desk D2 UI direction is explicitly accepted**. Its captured review answer was UI-direction-only; the later separate M01/UI implementation authority is recorded in [progress](progress.md#subsequent-m01-and-ui-authority). Neither acceptance of the design nor source preparation is product E2E, a milestone outcome or M02 authorization. The original supplied export remains immutable historical input; none of its scripts was executed or generated files hand-edited.
+The **corrected Evidence Desk D2 UI direction is explicitly accepted**. Its captured review answer was UI-direction-only; the later separate M01/UI implementation authority is recorded in [historical record](progress-history.md#subsequent-m01-and-ui-authority). Neither acceptance of the design nor source preparation is product E2E, a milestone outcome or M02 authorization. The original supplied export remains immutable historical input; none of its scripts was executed or generated files hand-edited.
 
 Project [requirements](requirements.md), [architecture](architecture.md) and [milestone gates](milestones.md) take precedence over generic export instructions. The archive is not a runtime dependency. The application port uses the accepted hand-authored D2 domain anatomy, not the conflicting generic `system/` seed, marketing pages or a new component-library theme.
 
@@ -13,7 +13,7 @@ Project [requirements](requirements.md), [architecture](architecture.md) and [mi
 - Self-contained exclusion hatches, full timestamped transition history, summary and both clock limitations before media, independent machine/phase/review/write/health/provenance and production OFF remain required. Unknown backend facts are unavailable, not inferred passes; the illustrative D2 10-second early-removal interval is not a project default.
 - No remote font, CDN, mandatory Ant Design, generic marketing route, model or second data server is introduced. The supplied export inventory below remains unchanged for provenance.
 
-Source/build, real rendered keyboard/layout/native-media journeys with explicit HTTP doubles, and standalone Django shell checks are recorded in [progress](progress.md#m01-ui-source-evidence). [Progress](progress.md#m01-combined-delivery-and-real-camera-validation) owns combined application and camera evidence and its limitations. Accepted mockup appearance and synthetic browser journeys are not proof of the complete application, a camera or model accuracy.
+Source/build, real rendered keyboard/layout/native-media journeys with explicit HTTP doubles, and standalone Django shell checks are recorded in [historical record](progress-history.md#m01-ui-source-evidence). [The historical record](progress-history.md#m01-combined-delivery-and-real-camera-validation) owns combined application and camera evidence and its limitations. Accepted mockup appearance and synthetic browser journeys are not proof of the complete application, a camera or model accuracy.
 
 ## Inventory of the supplied snapshot
 

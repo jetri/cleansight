@@ -1,6 +1,6 @@
 # M01 real-camera walkthrough on the development computer
 
-Use the **same development computer**. M01 does not require a separate machine or a GPU. This is a preparation checklist, not evidence that a camera was connected or M01 accepted. [Progress](progress.md) owns current status; [M01-A1 through A5](milestones.md#m01---inspectable-local-camera-workbench) remain unchanged.
+Use the **same development computer**. M01 does not require a separate machine or a GPU. This is a preparation checklist, not evidence that a camera was connected or M01 accepted. [Progress](progress.md) owns current status; [M01-A1 through A5](milestone-details.md#m01---inspectable-local-camera-workbench) remain unchanged.
 
 ## Confirm before connecting
 
