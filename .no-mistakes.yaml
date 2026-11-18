@@ -1,6 +1,8 @@
 # Camera-free canonical checks. Hosted CI adds isolated synthetic backend
 # and HTTP-double browser coverage; this is not live camera acceptance.
 commands:
+  # Requires Node 26.x and npm 11, as documented in frontend/README.md.
+  prepare: npm --prefix frontend ci --ignore-scripts --no-fund --include=dev
   test: npm --prefix frontend test
   lint: |
     python -m ruff check .
